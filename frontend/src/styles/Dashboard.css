@@ -1,0 +1,9 @@
+.Dashboard {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+.area {
+  display: flex;
+  flex-direction: column;
+}

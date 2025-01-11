@@ -1,0 +1,17 @@
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "lib": ["dom"],
+    "outDir": "dist",  // Where to put compiled files (relative to the `backend` folder)
+    "allowJs": true,    // Allows JS files
+    "target": "ES6",    // ES6 target
+    "strict": true,     // Strict type-checking
+    "checkJs": true,    // Type-check JS files
+    "esModuleInterop": true,  // Interoperability between ESM and CommonJS
+    "module":"ESNext",
+    "moduleResolution": "node"
+  },
+  "include": ["**/*"],  // All files in the `backend` folder and subdirectories
+  "exclude": ["node_modules", "dist"]
+}

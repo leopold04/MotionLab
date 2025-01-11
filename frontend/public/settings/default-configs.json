@@ -1,0 +1,21 @@
+{
+  "particle-ring": {
+    "seed": 3,
+    "canvas_width": 480,
+    "canvas_height": 854,
+    "background_color": "DarkSeaGreen",
+    "collision_sound": "https://xpyewsmgqmjoneqfmxqg.supabase.co/storage/v1/object/public/assets/sounds/sfx_alarm_loop4.wav"
+  },
+  "particle-arc": {
+    "seed": 0,
+    "canvas_width": 480,
+    "canvas_height": 854,
+    "background_color": "GhostWhite"
+  },
+  "square-box": {
+    "seed": 0,
+    "canvas_width": 480,
+    "canvas_height": 854,
+    "background_color": "SeaShell"
+  }
+}

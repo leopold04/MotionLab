@@ -1,0 +1,12 @@
+/* Ensure HTML and BODY take up full height */
+html,
+body {
+  height: 100%; /* Make sure both html and body take up full height */
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+}
+
+/* Make sure the #root element takes up full height */
+#root {
+  height: 100%; /* Ensure the root element takes full height */
+}

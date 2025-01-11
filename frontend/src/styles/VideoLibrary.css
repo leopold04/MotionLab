@@ -1,0 +1,23 @@
+.lib-container {
+  background-color: floralwhite;
+}
+.video-library {
+  height: 500px;
+  background-color: beige;
+  border-radius: 20px;
+  margin-left: 270px;
+  margin-right: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.card {
+  width: 15%;
+  margin-top: 30px;
+  border-radius: 10px;
+  background-color: #f7eac6;
+  aspect-ratio: 1080/1920;
+}

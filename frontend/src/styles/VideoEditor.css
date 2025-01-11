@@ -1,0 +1,36 @@
+/* Styles for the <h1> */
+h1 {
+  color: black;
+  margin: 0; /* remove any default margin */
+  padding: 20px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: floralwhite;
+}
+
+/* Video editor container */
+.video-editor {
+  display: flex;
+  flex-direction: row;
+  height: 85vh;
+  margin: 0px 20px 0px 270px;
+  padding: 20px;
+  background-color: beige;
+  border-radius: 20px;
+}
+#canvas {
+  width: 80%;
+  aspect-ratio: 9/16;
+  border-radius: 20px;
+}
+.animation-column {
+  display: flex;
+  flex-direction: column;
+  width: 30%;
+}
