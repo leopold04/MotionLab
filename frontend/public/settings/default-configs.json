@@ -3,19 +3,21 @@
     "seed": 3,
     "canvas_width": 480,
     "canvas_height": 854,
-    "background_color": "DarkSeaGreen",
+    "background_color": "#ebedf0",
+    "particle_1_color": "#88b0db",
+    "particle_2_color": "#729c8c",
     "collision_sound": "https://xpyewsmgqmjoneqfmxqg.supabase.co/storage/v1/object/public/assets/sounds/sfx_alarm_loop4.wav"
   },
   "particle-arc": {
     "seed": 0,
     "canvas_width": 480,
     "canvas_height": 854,
-    "background_color": "GhostWhite"
+    "background_color": "#edd3d1"
   },
   "square-box": {
     "seed": 0,
     "canvas_width": 480,
     "canvas_height": 854,
-    "background_color": "SeaShell"
+    "background_color": "#bbdaed"
   }
 }

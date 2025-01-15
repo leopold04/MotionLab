@@ -41,7 +41,7 @@ function createDirectories() {
   // unique directory for each user (relative to backend)
   let userDir = path.join(videoDir, `files_${userID}`);
   // unique directory for each user's session
-  let sessionDir = path.join(userDir, `session_${sessionID}`);
+  sessionDir = path.join(userDir, `session_${sessionID}`);
   // Directory to store the individual animation frames as PNG files
   frameDir = path.join(sessionDir, "frames");
 
@@ -84,6 +84,7 @@ function writeInfo(animation: any) {
   let info: any = { user: userID, session: sessionID, duration: duration, audioTimeline: animation.audioTimeline };
   info = JSON.stringify(info);
   const infoPath = path.join(sessionDir, "timeline.json");
+  console.log("writing to", infoPath);
   fs.writeFileSync(infoPath, info);
 
   console.log(animation.audioTimeline);

@@ -1,5 +1,8 @@
 {
   "canvas_width": "number",
   "canvas_height": "number",
-  "background_color": "color"
+  "background_color": "color",
+  "particle_1_color": "color",
+  "particle_2_color": "color",
+  "collision_sound": "file"
 }

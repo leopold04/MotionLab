@@ -34,9 +34,9 @@ class BounceParticle {
     const centerY = this.canvas.height / 2;
     this.ring = new Ring(200, this.canvas, this.ctx);
     // prettier-ignore
-    this.p1 = new Particle(centerX, centerY, 25, 0, 1, this.ring, "blue", this.canvas, this.ctx);
+    this.p1 = new Particle(centerX, centerY, 25, 0, 1, this.ring, config["particle_1_color"]! ,this.canvas, this.ctx);
     // prettier-ignore
-    this.p2 = new Particle(centerX, centerY, 25, 1, 0, this.ring, "green", this.canvas, this.ctx);
+    this.p2 = new Particle(centerX, centerY, 25, 1, 0, this.ring, config["particle_2_color"]!, this.canvas, this.ctx);
 
     this.particles = [this.p1, this.p2];
     this.seed = config["seed"] as number;

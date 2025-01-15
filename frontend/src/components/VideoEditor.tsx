@@ -1,105 +1,150 @@
 import "../styles/VideoEditor.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
+
 function VideoEditor() {
-  let animation: any;
-  let AnimationClass: any;
-  let config: any;
+  type InputType = "file" | "color";
+  let InputTypes: InputType[] = ["file", "color"];
+
+  const animationRef = useRef<any>(null);
+  const AnimationClassRef = useRef<any>(null);
+  const [formElements, setFormElements] = useState<[string, any, InputType][]>([]);
+  const [animationName, setAnimationName] = useState("particle-ring");
+  const configRef = useRef<any>(null);
 
   /*
 const videoResolutions = {
   "480p": [480, 854],
   "720p": [720, 1280],
   "1080p": [1080, 1920],
+
+  calcs: 1080 => 480: 0.44
+        1080 => 720: 0.66
 };
 const resolution = "480p";
 const [width, height] = videoResolutions[resolution];
   */
 
-  // gets default configs for an animation
-  async function getDefaultConfigs(animation: string): Promise<AnimationConfig> {
+  /**
+   * Fetches the default configuration for a specified animation.
+   * This function retrieves the default settings from a JSON file,
+   * creates a list of form elements based on the configuration,
+   * and updates the state with the new form elements.
+   * elementList = [["canvas_width", 480, 'number'], ["canvas_height", 720, 'number'], ["background_color", "DarkSeaGreen", 'color']]
+
+   *
+   * @param {string} animation - The name of the animation to get configs for.
+   */
+  async function getDefaultConfigs(animation: string) {
     const response = await fetch("/settings/default-configs.json");
     const data = await response.json();
-    let c: AnimationConfig = data[animation];
-    // elementList = [["canvas_width", 480, 'number'], ["canvas_height", 720, 'number'], ["background_color", "DarkSeaGreen", 'color']]
-    let elementList = await createElementList(c);
+    configRef.current = data[animation];
+    let elementList = await createElementList(configRef.current);
     console.log(elementList);
+    setFormElements(elementList);
+  }
+
+  /**
+   * Converts an AnimationConfig object into a list of key-value pairs
+   * along with their corresponding input types for form elements.
+   * This function fetches an element map to determine the input type
+   * for each configuration setting.
+   * 
+   *  takes an AnimationConfig ({ "canvas_width": 480, "canvas_height": 720, "background_color": "DarkSeaGreen" })
+   *   turns it into a list of kv pairs [["canvas_width", 480], ["canvas_height", 720], ["background_color", "DarkSeaGreen"]]
+   *  iterates through list and appends form input type to each element (["canvas_width", 480, 'number'], ["canvas_height", 720, 'number'], ["background_color", "DarkSeaGreen", 'color'])
+  
+   *
+   * @param {AnimationConfig} configuration - The configuration object to convert.
+   * @returns {Promise<[string, any, string][]>} - A list of configuration settings
+   *          with their values and input types.
+   */
+  async function createElementList(configuration: AnimationConfig): Promise<[string, any, InputType][]> {
+    const response = await fetch("/settings/element-map.json");
+    const elementMap = await response.json();
+    let configObject: object = configuration;
+    let configList = Object.entries(configObject);
+    let c: [string, any, InputType][] = [];
+    for (let [setting, value] of configList) {
+      c.push([setting, value, elementMap[setting]]);
+    }
     return c;
   }
 
-  // takes an AnimationConfig ({ "canvas_width": 480, "canvas_height": 720, "background_color": "DarkSeaGreen" })
-  // turns it into a list of kv pairs [["canvas_width", 480], ["canvas_height", 720], ["background_color", "DarkSeaGreen"]]
-  // iterates through list and appends form input type to each element (["canvas_width", 480, 'number'], ["canvas_height", 720, 'number'], ["background_color", "DarkSeaGreen", 'color'])
-  // returns the list
-  async function createElementList(configuration: AnimationConfig): Promise<[string, any][]> {
-    // loading in element map
-    const response = await fetch("/settings/element-map.json");
-    const elementMap = await response.json();
-
-    // converting to a js object so we can work with it easier
-    let configObject: object = configuration;
-    // converting to a list of kv pairs
-    let configList = Object.entries(configObject);
-    for (let config of configList) {
-      // [setting, _] = [key, value]
-      let [setting, _] = config;
-      // adding the appropriate input element type to the kv pair ["canvas_width", 480, 'number']
-      config.push(elementMap[setting]);
-    }
-    return configList;
-  }
+  /**
+   * Switches the current animation to a new one specified by the animation name.
+   * This function pauses the current animation (if any), fetches the default
+   * configuration for the new animation, and dynamically imports the animation module.
+   * It then creates a new animation instance and draws it on the canvas.
+   *
+   * @param {string} animationName - The name of the animation to switch to.
+   */
   async function switchAnimation(animationName: string) {
     let animationPath = `../graphics/animations/${animationName}`;
-    if (animation != null) {
-      animation.pause();
+    if (animationRef.current != null) {
+      animationRef.current.pause();
     }
     try {
-      config = await getDefaultConfigs(animationName);
-      // using @vite-ignore so that vite ignores the dynamic import
-      const module = await import(/* @vite-ignore */ animationPath); // Await the import
-      AnimationClass = module.default; // Get the default export
-
-      animation = new AnimationClass(config);
-      animation.draw();
-      animation.pause();
+      await getDefaultConfigs(animationName);
+      console.log(configRef.current);
+      const module = await import(/* @vite-ignore */ animationPath);
+      AnimationClassRef.current = module.default;
+      animationRef.current = new AnimationClassRef.current(configRef.current);
+      animationRef.current.draw();
+      animationRef.current.pause();
     } catch (err) {
       console.error("Failed to load animation module", err);
     }
   }
 
-  // resets the current animation (can be used if config changes)
-  // restarts with current config file, not default
+  /**
+   * Resets the current animation using the existing configuration.
+   * This function pauses the current animation (if any) and
+   * reinitializes it with the current configuration settings.
+   */
   async function resetAnimation() {
     let animationPath = `../graphics/animations/${animationName}`;
-    if (animation != null) {
-      animation.pause();
+    if (animationRef.current != null) {
+      animationRef.current.pause();
     }
-
-    // using @vite-ignore so that vite ignores the dynamic import
     const module = await import(/* @vite-ignore */ animationPath);
-    AnimationClass = module.default; // Get the default export
-
-    // resetting current animation with current config
-    animation = new AnimationClass(config);
-    animation.draw();
-    animation.pause();
+    AnimationClassRef.current = module.default;
+    animationRef.current = new AnimationClassRef.current(configRef.current);
+    animationRef.current.draw();
+    animationRef.current.pause();
   }
 
-  const [animationName, setAnimationName] = useState("particle-ring");
+  /**
+   * Effect hook that runs when the animation name changes.
+   * It calls the switchAnimation function to update the animation
+   * displayed in the editor.
+   */
   useEffect(() => {
     switchAnimation(animationName);
     console.log(animationName);
   }, [animationName]);
 
+  /**
+   * Handles changes to the animation selection dropdown.
+   * This function updates the state with the selected animation name.
+   *
+   * @param {React.ChangeEvent<HTMLSelectElement>} event - The change event
+   *          from the select element.
+   */
   function handleAnimationChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setAnimationName(event.target.value);
   }
 
+  /**
+   * Sends a request to generate a video with the current animation settings.
+   * This function constructs a video data object containing user info,
+   * video info, and animation info, and sends it to the server via a POST request.
+   */
   async function sendGenerationRequest() {
     let videoData = {
       userInfo: { userID: 1234, sessionID: Date.now() % 100 },
       videoInfo: { duration: 5 },
-      animationInfo: { animationName: animationName, config: config },
+      animationInfo: { animationName: animationName, config: configRef.current },
     };
     try {
       const response = await fetch("http://localhost:3000/generate", {
@@ -107,7 +152,6 @@ const [width, height] = videoResolutions[resolution];
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(videoData),
       });
-
       const data = await response.json();
       console.log(data);
     } catch (error) {
@@ -115,21 +159,81 @@ const [width, height] = videoResolutions[resolution];
     }
   }
 
+  function handleColorChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
+    // setting = "bg_color" | "particle_color" ...
+    // event.target.value = a css color
+    updateConfig(setting, event.target.value);
+    console.log(configRef.current);
+    resetAnimation();
+  }
+
+  function updateConfig(setting: string, value: any) {
+    // updating the config
+    configRef.current[setting] = value;
+
+    // updating the formElements state to trigger re-render of component
+    setFormElements((prevFormElements) =>
+      prevFormElements.map(([prevSetting, prevValue, inputType]) => {
+        if (setting === prevSetting) {
+          // look for the element in formElements that has the same setting as what we are trying to change
+          return [prevSetting, value, inputType];
+        } else {
+          // if we are not changing the target setting, leave the element unchanged
+          return [prevSetting, prevValue, inputType];
+        }
+      })
+    );
+    // reset the animation
+    resetAnimation();
+  }
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
+    if (event.target.files) {
+      const file = event.target.files[0];
+      const fileURL = URL.createObjectURL(file);
+      console.log(fileURL, file.name, file.size);
+      // updating
+      updateConfig(setting, fileURL);
+    }
+  }
+
+  /**
+   * Randomizes the animation by generating a new seed value
+   * and resetting the animation with the updated configuration.
+   */
   async function randomizeAnimation() {
     const seed = 1000 * Math.random();
-    config["seed"] = seed;
+    configRef.current["seed"] = seed;
     console.log();
     resetAnimation();
   }
+
+  let inputMap: { [key in InputType]: (setting: string, value: any) => JSX.Element } = {
+    file: (setting: string, value: any) => {
+      return (
+        <div key={setting}>
+          <label htmlFor={setting}>{setting}</label>
+          <input type="file" id={setting} onChange={(e) => handleFileChange(e, setting)} />
+        </div>
+      );
+    },
+    color: (setting: string, value: any) => {
+      return (
+        <div key={setting}>
+          <label htmlFor={setting}>{setting}</label>
+          <input type="color" id={setting} value={value} onChange={(e) => handleColorChange(e, setting)} />
+        </div>
+      );
+    },
+  };
   return (
     <div className="container">
       <h1>Editor</h1>
-
       <div className="video-editor">
         <div className="animation-column">
           <canvas id="canvas"></canvas>
-          <button onClick={() => animation.play()}>Play</button>
-          <button onClick={() => animation.pause()}>Pause</button>
+          <button onClick={() => animationRef.current.play()}>Play</button>
+          <button onClick={() => animationRef.current.pause()}>Pause</button>
           <button onClick={resetAnimation}>Reset</button>
           <button onClick={randomizeAnimation}>Randomize</button>
           <button onClick={sendGenerationRequest}>Generate</button>
@@ -143,7 +247,13 @@ const [width, height] = videoResolutions[resolution];
               <option value="square-box">Square Box</option>
             </select>
           </form>
-          <form id="config-form"></form>
+          <form id="config-form">
+            {formElements
+              // only choosing settings with the correct input type
+              .filter(([setting, value, inputType]) => InputTypes.includes(inputType))
+              // creating elements based on our map (ex: map[color]("bg_color", "green") => ...)
+              .map(([setting, value, inputType]) => inputMap[inputType](setting, value))}
+          </form>
         </div>
       </div>
     </div>
