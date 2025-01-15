@@ -12,6 +12,7 @@ let userID = "";
 let sessionID = 0;
 let sessionDir = "";
 let animationName = "";
+let audioTimeline = {};
 // The output directory will store all the frames as image files. Later, we can include a user-specific identifier to avoid naming conflicts in production environments.
 // Later, we can include a user-specific identifier to avoid naming conflicts in production environments.
 let config: AnimationConfig;
@@ -28,7 +29,6 @@ async function run(animationName: string) {
 
     createDirectories();
     writeFrames(animation);
-    writeInfo(animation);
     let timeElapsed = (Date.now() - startTime) / 1000;
     console.log(`Generation completed in ${timeElapsed}s`);
   } catch (error) {
@@ -78,16 +78,8 @@ function writeFrames(animation: any) {
       console.log(`Rendered frame ${frameIndex + 1}/${totalFrames}`);
     }
   }
+  audioTimeline = animation.audioTimeline;
   console.log("Frames generated."); // Log that frame generation is complete
-}
-function writeInfo(animation: any) {
-  let info: any = { user: userID, session: sessionID, duration: duration, audioTimeline: animation.audioTimeline };
-  info = JSON.stringify(info);
-  const infoPath = path.join(sessionDir, "timeline.json");
-  console.log("writing to", infoPath);
-  fs.writeFileSync(infoPath, info);
-
-  console.log(animation.audioTimeline);
 }
 
 const app = express();
@@ -101,6 +93,16 @@ app.post("/generate", async (request, response) => {
   ({ animationName, config } = request.body.animationInfo);
   await run(animationName);
   response.json({ message: "success" });
+  // make request with timeline json
+  // {userID, sessionID, duration, frameDirPath, audioTimeline}
+  let info: any = {
+    user: userID,
+    session: sessionID,
+    framePath: frameDir,
+    duration: duration,
+    audioTimeline: audioTimeline,
+  };
+  console.log(info);
 });
 
 app.listen(3000, () => {

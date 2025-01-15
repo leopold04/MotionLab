@@ -188,11 +188,14 @@ const [width, height] = videoResolutions[resolution];
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
+    // checking if files array is not null
     if (event.target.files) {
+      // grabbing file object
       const file = event.target.files[0];
+      // turning it into a URL (active as long as the app is open in browser)
       const fileURL = URL.createObjectURL(file);
       console.log(fileURL, file.name, file.size);
-      // updating
+      // updating config
       updateConfig(setting, fileURL);
     }
   }
