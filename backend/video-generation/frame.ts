@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import express from "express";
 import cors from "cors";
+import fetch from "node-fetch";
 import AnimationConfig from "../../frontend/src/graphics/utils/animation-config.js";
 
 let duration: number;
@@ -11,6 +12,7 @@ let frameDir = "";
 let userID = "";
 let sessionID = 0;
 let sessionDir = "";
+let audioDir = "";
 let animationName = "";
 let audioTimeline = {};
 // The output directory will store all the frames as image files. Later, we can include a user-specific identifier to avoid naming conflicts in production environments.
@@ -26,7 +28,6 @@ async function run(animationName: string) {
     const module = await import(`../../frontend/src/graphics/animations/${animationName}.js`);
     const Animation = module.default;
     const animation = new Animation(config);
-
     createDirectories();
     writeFrames(animation);
     let timeElapsed = (Date.now() - startTime) / 1000;
@@ -44,26 +45,30 @@ function createDirectories() {
   sessionDir = path.join(userDir, `session_${sessionID}`);
   // Directory to store the individual animation frames as PNG files
   frameDir = path.join(sessionDir, "frames");
+  // Directory to store audio wav files
+  audioDir = path.join(sessionDir, "audio");
 
-  // making user directory
+  // making video directory
   if (!fs.existsSync(videoDir)) {
     // If the directory doesn't exist, create it
     fs.mkdirSync(videoDir);
   }
+  // making user directory
   if (!fs.existsSync(userDir)) {
     // If the directory doesn't exist, create it
     fs.mkdirSync(userDir);
   }
 
-  // making session and frame directories
+  // making session, frame, and audio directories
   if (!fs.existsSync(sessionDir)) {
     fs.mkdirSync(sessionDir);
     fs.mkdirSync(frameDir);
+    fs.mkdirSync(audioDir);
   }
 }
 
 function writeFrames(animation: any) {
-  console.log("Generating frames");
+  console.log("Starting frame generation");
   const totalFrames = fps * duration; // Total number of frames, calculated as fps * duration (30 FPS * 10 seconds = 300 frames)
   // Loop through each frame and create it using the `createFrame` method of the Animation class
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
@@ -75,11 +80,10 @@ function writeFrames(animation: any) {
     const buffer = animation.canvas.toBuffer("image/png");
     fs.writeFileSync(framePath, buffer);
     if (frameIndex % 100 == 0) {
-      console.log(`Rendered frame ${frameIndex + 1}/${totalFrames}`);
+      console.log(`Rendered ${frameIndex + 1}/${totalFrames} frames`);
     }
   }
   audioTimeline = animation.audioTimeline;
-  console.log("Frames generated."); // Log that frame generation is complete
 }
 
 const app = express();
@@ -87,35 +91,47 @@ app.use(express.json());
 app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
 
 app.post("/generate", async (request, response) => {
+  console.log("Request:");
   console.log(request.body);
+  console.log("");
   ({ userID, sessionID } = request.body.userInfo);
   ({ duration } = request.body.videoInfo);
   ({ animationName, config } = request.body.animationInfo);
   await run(animationName);
-  response.json({ message: "success" });
-  // make request with timeline json
-  // {userID, sessionID, duration, frameDirPath, audioTimeline}
   let info: any = {
     user: userID,
     session: sessionID,
-    framePath: frameDir,
+    sessionDir: sessionDir,
     duration: duration,
     audioTimeline: audioTimeline,
   };
-  console.log(info);
+
+  // sending request to flask endpoint to start video generation process
+  console.log("Sending video creation request");
+  try {
+    const res = await fetch("http://localhost:8000/vid", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(info),
+    });
+  } catch (error) {
+    console.log(error);
+  }
+
+  response.json({ message: "success" });
 });
 
 app.listen(3000, () => {
-  console.log("app running on port 3000");
+  console.log("Express app running on port 3000");
 });
 
 /*
 - make frames in ts
 - send request (timeline body) to python to add audio & make final video
-- send final product to public folder to serve 
-- give frontend path to final video to serve
-- upload video to supabase and then delete
-
+- upload final product to supabase with resumable upload
+- grab urls from supabase bucket to preview in 'my videos'
+- create download url for frontend
+- 
 
 
 */
