@@ -2,6 +2,10 @@ import json
 import os
 import ffmpeg
 from pydub import AudioSegment
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import requests
+
 # change this later
 userID = ""
 sessionID = ""
@@ -18,34 +22,44 @@ fps = 60  # Frames per second for the video
 frame_pattern = os.path.join(frame_dir, 'frame%04d.png')
 
 
-def generate_audio():
+def download_audio_file(url: str, path: str):
+    # currently only accepting .wav files for audio
+    query_params = {"downloadformat": "wav"}
+    response = requests.get(url, params=query_params)
+    if response.status_code == 200:
+        with open(path, 'wb') as file:
+            file.write(response.content)
+
+
+def generate_audio(audio_timeline: list[dict[str, str]], duration: int, session_dir: str):
+    # audio_timeline = [{"audio": url, "frame": int}, {"audio": url, "frame": int}]
     print("starting audio creation")
-
-    # Audio timeline data (replace with your actual timeline)
-    with open(timeline_path) as file:
-        audio_timeline = json.load(file)
-    # pop audio duration from front of audiotimeline and convert from s to ms
-    audio_duration = audio_timeline.pop(0)["duration"] * 1000
-    # Create an empty audio segment to start with
-
-    final_audio = AudioSegment.silent(duration=audio_duration)
+    # Create an empty audio segment to start with (duration is in ms)
+    final_audio = AudioSegment.silent(duration=duration * 1000)
 
     # Add each audio file to the timeline
-    for entry in audio_timeline:
+    for index, entry in enumerate(audio_timeline):
+        # {"audio": url, "frame": int}
         # Load the audio file
-        audio_path = entry["audio"]
-        audio = AudioSegment.from_mp3(audio_path)
+        audio_url: str = str(entry["audio"])
+        # in session/audio directory, add audio_{index}
+        audio_dir: str = os.path.join(session_dir, "audio")
+        audio_path: str = os.path.join(audio_dir, "sound_" + str(index))
+        # download audio from url and save it to path
+        download_audio_file(audio_url, audio_path)
 
-        # Calculate the time in seconds to insert the audio (frame / fps)
-        # Convert seconds to milliseconds
-        start_time_ms = (entry["frame"] / fps) * 1000
+        # formatting audio file
+        audio = AudioSegment.from_wav(audio_path)
+        # start time of audio position in MILLISECONDS
+        # going from frame to MS: frame / 60 * 1000 = frame * 1000 // 60
+        audio_position: int = int(entry["frame"]) * 1000 // fps
 
         # Overlay the audio at the correct position
-        final_audio = final_audio.overlay(audio, position=start_time_ms)
+        final_audio = final_audio.overlay(audio, position=audio_position)
 
     # Export the final combined audio to a file
+    output_audio = os.path.join(session_dir, "output.wav")
     final_audio.export(output_audio, format="wav")
-
     print(f"Audio has been generated and saved to {output_audio}")
 
 
@@ -92,9 +106,30 @@ def generate_video():
 
 def main():
     combine_frames()
-    generate_audio()
+    # generate_audio()
     generate_video()
     clean_up()
 
 
-main()
+# main()
+
+
+app = Flask(__name__)
+CORS(app)
+
+
+@app.route("/vid", methods=["POST"])
+def create_video():
+    # receiving json containing: user, session, sessionDir, duration, audioTimeline
+    data = request.get_json()
+
+    print("Request received from JS backend")
+    print(json.dumps(data, indent=4))
+
+    # generating audio for video (saved to sessionDir/output.wav)
+    generate_audio(data["audioTimeline"], data["duration"], data["sessionDir"])
+    return jsonify({"message": "video created"})
+
+
+if __name__ == '__main__':
+    app.run(host="localhost", debug=True, port=8000)
