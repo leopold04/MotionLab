@@ -11,7 +11,7 @@
     "path": "^0.12.7"
   },
   "scripts": {
-    "dev": "tsx video-generation/frame.ts"
+    "dev": "tsx video_generation/frame.ts"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
