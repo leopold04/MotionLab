@@ -1,9 +1,9 @@
 import "../styles/VideoEditor.css";
 import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
-import { time } from "console";
 
 function VideoEditor() {
+  // this lets us only include certain default configs to render (not seed)
   type InputType = "file" | "color";
   let InputTypes: InputType[] = ["file", "color"];
 
@@ -13,18 +13,44 @@ function VideoEditor() {
   const [animationName, setAnimationName] = useState("particle-ring");
   const configRef = useRef<any>(null);
 
-  /*
-const videoResolutions = {
-  "480p": [480, 854],
-  "720p": [720, 1280],
-  "1080p": [1080, 1920],
+  const [isRunning, setIsRunning] = useState(false);
+  const intervalID = useRef<any>(null);
+  const [time, setTime] = useState(0);
+  const [duration, setDuration] = useState(5);
 
-  calcs: 1080 => 480: 0.44
-        1080 => 720: 0.66
-};
-const resolution = "480p";
-const [width, height] = videoResolutions[resolution];
-  */
+  /**
+   * Effect hook that runs when the animation name changes.
+   * It calls the switchAnimation function to update the animation
+   * displayed in the editor.
+   */
+  useEffect(() => {
+    switchAnimation(animationName);
+    console.log(animationName);
+  }, [animationName]);
+
+  // we can use a state for the time here because even if the page re renders (since the state of is running changes)
+  // the animation will not be re rendered, since it is a reference.
+  useEffect(() => {
+    if (isRunning) {
+      // 10 ms = 0.01 s
+      let delay = 10;
+      intervalID.current = setInterval(() => {
+        let frame = animationRef.current.frame;
+        // converting frames to seconds then rounding to 2 decimal places
+        let elapsedTime = Math.round((100 * frame) / 60) / 100;
+        setTime(elapsedTime);
+
+        // pausing once we reach the video duration
+        if (elapsedTime >= duration) {
+          pause();
+        }
+      }, delay);
+    }
+
+    return () => {
+      clearInterval(intervalID.current);
+    };
+  }, [isRunning]);
 
   /**
    * Fetches the default configuration for a specified animation.
@@ -136,39 +162,6 @@ const [width, height] = videoResolutions[resolution];
   }
 
   /**
-   * Effect hook that runs when the animation name changes.
-   * It calls the switchAnimation function to update the animation
-   * displayed in the editor.
-   */
-  useEffect(() => {
-    switchAnimation(animationName);
-    console.log(animationName);
-  }, [animationName]);
-
-  const [isRunning, setIsRunning] = useState(false);
-  const intervalID = useRef<any>(null);
-  const [time, setTime] = useState(0);
-
-  // we can use a state for the time here because even if the page re renders (since the state of is running changes)
-  // the animation will not be re rendered, since it is a reference.
-  useEffect(() => {
-    if (isRunning) {
-      // 10 ms = 0.01 s
-      let delay = 10;
-      intervalID.current = setInterval(() => {
-        let frame = animationRef.current.frame;
-        // converting frames to seconds then rounding to 2 decimal places
-        let elapsedTime = Math.round((100 * frame) / 60) / 100;
-        setTime(elapsedTime);
-      }, delay);
-    }
-
-    return () => {
-      clearInterval(intervalID.current);
-    };
-  }, [isRunning]);
-
-  /**
    * Handles changes to the animation selection dropdown.
    * This function updates the state with the selected animation name.
    *
@@ -187,7 +180,7 @@ const [width, height] = videoResolutions[resolution];
   async function sendGenerationRequest() {
     let videoData = {
       userInfo: { userID: 1234, sessionID: Date.now() % 100 },
-      videoInfo: { duration: 10 },
+      videoInfo: { duration: duration },
       animationInfo: { animationName: animationName, config: configRef.current },
     };
     try {
@@ -235,6 +228,7 @@ const [width, height] = videoResolutions[resolution];
     // checking if files array is not null
     if (event.target.files) {
       // send form data to the backend so it can eventually get uploaded to supabase
+      // send back supabase url
 
       const file = event.target.files[0];
       // turning it into a URL (active as long as the app is open in browser)
@@ -244,9 +238,26 @@ const [width, height] = videoResolutions[resolution];
       updateConfig(setting, fileURL);
     }
   }
+  function setResolution(resolution: string) {
+    const videoResolutions: { [key: string]: number[] } = {
+      "480p": [480, 854],
+      "720p": [720, 1280],
+      "1080p": [1080, 1920],
+    };
+    let [width, height] = videoResolutions[resolution];
+    updateConfig("canvas_width", width);
+    updateConfig("canvas_height", height);
+  }
+  function handleDurationChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setDuration(parseInt(event.target.value));
+  }
+  function formatTime(time: number, duration: number) {
+    // time is in format s.00
+    return time.toFixed(2) + " / " + duration.toFixed(2);
+  }
 
   let inputMap: { [key in InputType]: (setting: string, value: any) => JSX.Element } = {
-    file: (setting: string, value: any) => {
+    file: (setting: string, _: any) => {
       return (
         <div key={setting}>
           <label htmlFor={setting}>{setting}</label>
@@ -269,7 +280,7 @@ const [width, height] = videoResolutions[resolution];
       <div className="video-editor">
         <div className="animation-column">
           <canvas id="canvas"></canvas>
-          <h3>{time}</h3>
+          <h3 className="time">{formatTime(time, duration)}</h3>
           <button onClick={play}>Play</button>
           <button onClick={pause}>Pause</button>
           <button onClick={resetAnimation}>Reset</button>
@@ -284,11 +295,32 @@ const [width, height] = videoResolutions[resolution];
               <option value="particle-arc">Particle Arc</option>
               <option value="square-box">Square Box</option>
             </select>
+            <div className="resolution-group">
+              <button className="button" type="button" onClick={() => setResolution("480p")}>
+                480p
+              </button>
+              <button className="button" type="button" onClick={() => setResolution("720p")}>
+                720p
+              </button>
+              <button className="button" type="button" onClick={() => setResolution("1080p")}>
+                1080p
+              </button>
+            </div>
+            <label htmlFor="duration">Video Duration:</label>
+            <input
+              type="number"
+              id="duration"
+              name="duration"
+              min="0"
+              max="65"
+              onChange={handleDurationChange}
+              placeholder={duration.toString()}
+            />
           </form>
           <form id="config-form">
             {formElements
               // only choosing settings with the correct input type
-              .filter(([setting, value, inputType]) => InputTypes.includes(inputType))
+              .filter(([, , inputType]) => InputTypes.includes(inputType))
               // creating elements based on our map (ex: map[color]("bg_color", "green") => ...)
               .map(([setting, value, inputType]) => inputMap[inputType](setting, value))}
           </form>

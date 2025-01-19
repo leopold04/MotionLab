@@ -108,7 +108,7 @@ def generate_video(session_dir: str):
     video = ffmpeg.input(output_video)
     ffmpeg.output(video, audio, final_video, vcodec='libx264',
                   acodec='aac', strict='experimental', loglevel='quiet').run()
-    print("Final video saved to", final_video)
+    print("Final video generated and saved to", final_video)
 
 
 video_bp = Blueprint("video_bp", __name__)

@@ -5,3 +5,4 @@ backend/node_modules
 backend/.DS_Store
 videos
 run.sh
+backend/video_generation/__pycache__
