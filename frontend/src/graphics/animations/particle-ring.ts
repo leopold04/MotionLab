@@ -34,9 +34,9 @@ class BounceParticle {
     const centerY = this.canvas.height / 2;
     this.ring = new Ring(200, this.canvas, this.ctx);
     // prettier-ignore
-    this.p1 = new Particle(centerX, centerY, 25, 0, 1, this.ring, config["particle_1_color"]! ,this.canvas, this.ctx);
+    this.p1 = new Particle(centerX, centerY, 25, 0, 3, this.ring, config["particle_1_color"]! ,this.canvas, this.ctx);
     // prettier-ignore
-    this.p2 = new Particle(centerX, centerY, 25, 1, 0, this.ring, config["particle_2_color"]!, this.canvas, this.ctx);
+    this.p2 = new Particle(centerX, centerY, 25, 3, 0, this.ring, config["particle_2_color"]!, this.canvas, this.ctx);
 
     this.particles = [this.p1, this.p2];
     this.seed = config["seed"] as number;
@@ -77,7 +77,6 @@ class BounceParticle {
   handleSound(sound_url: string) {
     // path needs to be relative to the file it is being run in
     if (typeof window === "undefined") {
-      // path is relative to main dir (since we run it )
       this.audioTimeline.push({ audio: sound_url, frame: this.frame });
     } else {
       // path is relative to the public folder

@@ -1,6 +1,7 @@
 import "../styles/VideoEditor.css";
 import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
+import { time } from "console";
 
 function VideoEditor() {
   type InputType = "file" | "color";
@@ -111,7 +112,27 @@ const [width, height] = videoResolutions[resolution];
     AnimationClassRef.current = module.default;
     animationRef.current = new AnimationClassRef.current(configRef.current);
     animationRef.current.draw();
+    pause();
+    setTime(0);
+  }
+
+  /**
+   * Randomizes the animation by generating a new seed value
+   * and resetting the animation with the updated configuration.
+   */
+  async function randomizeAnimation() {
+    const seed = 1000 * Math.random();
+    configRef.current["seed"] = seed;
+    console.log();
+    resetAnimation();
+  }
+  function play() {
+    animationRef.current.play();
+    setIsRunning(true);
+  }
+  function pause() {
     animationRef.current.pause();
+    setIsRunning(false);
   }
 
   /**
@@ -123,6 +144,29 @@ const [width, height] = videoResolutions[resolution];
     switchAnimation(animationName);
     console.log(animationName);
   }, [animationName]);
+
+  const [isRunning, setIsRunning] = useState(false);
+  const intervalID = useRef<any>(null);
+  const [time, setTime] = useState(0);
+
+  // we can use a state for the time here because even if the page re renders (since the state of is running changes)
+  // the animation will not be re rendered, since it is a reference.
+  useEffect(() => {
+    if (isRunning) {
+      // 10 ms = 0.01 s
+      let delay = 10;
+      intervalID.current = setInterval(() => {
+        let frame = animationRef.current.frame;
+        // converting frames to seconds then rounding to 2 decimal places
+        let elapsedTime = Math.round((100 * frame) / 60) / 100;
+        setTime(elapsedTime);
+      }, delay);
+    }
+
+    return () => {
+      clearInterval(intervalID.current);
+    };
+  }, [isRunning]);
 
   /**
    * Handles changes to the animation selection dropdown.
@@ -143,7 +187,7 @@ const [width, height] = videoResolutions[resolution];
   async function sendGenerationRequest() {
     let videoData = {
       userInfo: { userID: 1234, sessionID: Date.now() % 100 },
-      videoInfo: { duration: 5 },
+      videoInfo: { duration: 10 },
       animationInfo: { animationName: animationName, config: configRef.current },
     };
     try {
@@ -190,7 +234,8 @@ const [width, height] = videoResolutions[resolution];
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
     // checking if files array is not null
     if (event.target.files) {
-      // grabbing file object
+      // send form data to the backend so it can eventually get uploaded to supabase
+
       const file = event.target.files[0];
       // turning it into a URL (active as long as the app is open in browser)
       const fileURL = URL.createObjectURL(file);
@@ -198,17 +243,6 @@ const [width, height] = videoResolutions[resolution];
       // updating config
       updateConfig(setting, fileURL);
     }
-  }
-
-  /**
-   * Randomizes the animation by generating a new seed value
-   * and resetting the animation with the updated configuration.
-   */
-  async function randomizeAnimation() {
-    const seed = 1000 * Math.random();
-    configRef.current["seed"] = seed;
-    console.log();
-    resetAnimation();
   }
 
   let inputMap: { [key in InputType]: (setting: string, value: any) => JSX.Element } = {
@@ -235,8 +269,9 @@ const [width, height] = videoResolutions[resolution];
       <div className="video-editor">
         <div className="animation-column">
           <canvas id="canvas"></canvas>
-          <button onClick={() => animationRef.current.play()}>Play</button>
-          <button onClick={() => animationRef.current.pause()}>Pause</button>
+          <h3>{time}</h3>
+          <button onClick={play}>Play</button>
+          <button onClick={pause}>Pause</button>
           <button onClick={resetAnimation}>Reset</button>
           <button onClick={randomizeAnimation}>Randomize</button>
           <button onClick={sendGenerationRequest}>Generate</button>

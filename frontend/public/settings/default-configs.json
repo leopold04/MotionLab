@@ -6,7 +6,7 @@
     "background_color": "#ebedf0",
     "particle_1_color": "#88b0db",
     "particle_2_color": "#729c8c",
-    "collision_sound": "https://xpyewsmgqmjoneqfmxqg.supabase.co/storage/v1/object/public/assets/sounds/sfx_alarm_loop4.wav"
+    "collision_sound": "https://xsuhlhkrnljnqhiugfpo.supabase.co/storage/v1/object/public/media/images/sfx_lowhealth_alarmloop1.wav?t=2025-01-18T01%3A26%3A31.208Z"
   },
   "particle-arc": {
     "seed": 0,
