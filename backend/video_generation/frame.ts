@@ -90,7 +90,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
 
-app.post("/generate", async (request, response) => {
+app.post("/video/create_frames", async (request, response) => {
   console.log("Request:");
   console.log(request.body);
   console.log("");
@@ -108,17 +108,19 @@ app.post("/generate", async (request, response) => {
 
   // sending request to flask endpoint to start video generation process
   console.log("Sending video creation request");
+  let data;
   try {
-    const res = await fetch("http://localhost:8000/vid", {
+    const res = await fetch("http://localhost:8000/video/create_video", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(info),
     });
+    data = await res.json();
   } catch (error) {
     console.log(error);
   }
 
-  response.json({ message: "success" });
+  response.json(data);
 });
 
 app.listen(3000, () => {

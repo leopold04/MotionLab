@@ -1,10 +1,11 @@
-import json
 import os
-import ffmpeg
-from pydub import AudioSegment
 from flask import Blueprint, Flask, request, jsonify
 from flask_cors import CORS
 import requests
+import json
+
+import ffmpeg
+from pydub import AudioSegment
 import time
 
 
@@ -114,7 +115,7 @@ def generate_video(session_dir: str):
 video_bp = Blueprint("video_bp", __name__)
 
 
-@video_bp.route("/vid", methods=["POST"])
+@video_bp.route("/video/create_video", methods=["POST"])
 def create_video():
     # receiving json containing: user, session, sessionDir, duration, audioTimeline
     data = request.get_json()

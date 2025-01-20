@@ -6,3 +6,5 @@ backend/.DS_Store
 videos
 run.sh
 backend/video_generation/__pycache__
+backend/user/__pycache__
+backend/user/.env

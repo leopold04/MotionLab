@@ -4,8 +4,8 @@ import AnimationConfig from "../graphics/utils/animation-config";
 
 function VideoEditor() {
   // this lets us only include certain default configs to render (not seed)
-  type InputType = "file" | "color";
-  let InputTypes: InputType[] = ["file", "color"];
+  type InputType = "color" | "audio" | "image";
+  let InputTypes: InputType[] = ["color", "audio", "image"];
 
   const animationRef = useRef<any>(null);
   const AnimationClassRef = useRef<any>(null);
@@ -149,7 +149,6 @@ function VideoEditor() {
   async function randomizeAnimation() {
     const seed = 1000 * Math.random();
     configRef.current["seed"] = seed;
-    console.log();
     resetAnimation();
   }
   function play() {
@@ -184,7 +183,7 @@ function VideoEditor() {
       animationInfo: { animationName: animationName, config: configRef.current },
     };
     try {
-      const response = await fetch("http://localhost:3000/generate", {
+      const response = await fetch("http://localhost:3000/video/create_frames", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(videoData),
@@ -194,14 +193,6 @@ function VideoEditor() {
     } catch (error) {
       console.log(error);
     }
-  }
-
-  function handleColorChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
-    // setting = "bg_color" | "particle_color" ...
-    // event.target.value = a css color
-    updateConfig(setting, event.target.value);
-    console.log(configRef.current);
-    resetAnimation();
   }
 
   function updateConfig(setting: string, value: any) {
@@ -224,18 +215,40 @@ function VideoEditor() {
     resetAnimation();
   }
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
+  function handleColorChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
+    // setting = "bg_color" | "particle_color" ...
+    // event.target.value = a css color
+    updateConfig(setting, event.target.value);
+    console.log(configRef.current);
+    resetAnimation();
+  }
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
     // checking if files array is not null
     if (event.target.files) {
       // send form data to the backend so it can eventually get uploaded to supabase
       // send back supabase url
 
       const file = event.target.files[0];
-      // turning it into a URL (active as long as the app is open in browser)
-      const fileURL = URL.createObjectURL(file);
-      console.log(fileURL, file.name, file.size);
-      // updating config
-      updateConfig(setting, fileURL);
+      const formData = new FormData();
+      // add the bytes of the file to our form data array
+      formData.append("filename", file.name);
+      formData.append("file", file);
+
+      // send the bytes of our file to the backend
+      try {
+        const response = await fetch("http://localhost:8000/user/upload_file", {
+          method: "POST",
+          body: formData,
+        });
+        // getting the url response from our backend
+        const data = await response.json();
+        const url = data["url"];
+        // updating the config with the sound url
+        updateConfig(setting, url);
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
   function setResolution(resolution: string) {
@@ -257,14 +270,28 @@ function VideoEditor() {
   }
 
   let inputMap: { [key in InputType]: (setting: string, value: any) => JSX.Element } = {
-    file: (setting: string, _: any) => {
+    audio: (setting: string, _: any) => {
       return (
         <div key={setting}>
           <label htmlFor={setting}>{setting}</label>
-          <input type="file" id={setting} onChange={(e) => handleFileChange(e, setting)} />
+          <input type="file" id={setting} accept="audio/x-wav" onChange={(e) => handleFileChange(e, setting)} />
         </div>
       );
     },
+    image: (setting: string, _: any) => {
+      return (
+        <div key={setting}>
+          <label htmlFor={setting}>{setting}</label>
+          <input
+            type="file"
+            id={setting}
+            accept="image/png, image/jpeg, image/jpg"
+            onChange={(e) => handleFileChange(e, setting)}
+          />
+        </div>
+      );
+    },
+
     color: (setting: string, value: any) => {
       return (
         <div key={setting}>
