@@ -7,6 +7,8 @@ from user.user import create_bucket
 import ffmpeg
 from pydub import AudioSegment
 import time
+from tusclient import client
+from user.user import supabase
 
 
 def download_audio_file(url: str, path: str):
@@ -110,10 +112,40 @@ def generate_video(session_dir: str):
     ffmpeg.output(video, audio, final_video, vcodec='libx264',
                   acodec='aac', strict='experimental', loglevel='quiet').run()
     print("Final video generated and saved to", final_video)
+    return final_video
 
 
-def upload_video():
-    pass
+def upload_video(file, user, session):
+    '''
+    Uploads a completed video to a user's video folder inside their bucket
+    Then returns the URL of the generated video
+    '''
+
+    # initialize the TUS client
+    tus_client = client.TusClient(
+        f"{supabase.supabase_url}/storage/v1/upload/resumable",
+        headers={"Authorization": f"Bearer {
+            supabase.supabase_key}", "x-upsert": "true"},
+    )
+
+    # create a bucket for the user if you have not already
+    create_bucket(user)
+    bucket_path = "videos/video_" + session
+    uploader = tus_client.uploader(
+        file_stream=file,
+        chunk_size=(6 * 1024 * 1024),
+        metadata={
+            "bucketName": user,
+            "objectName": bucket_path,
+            "contentType": "video/mp4",
+            "cacheControl": "3600",
+        },
+    )
+    uploader.upload()
+    # retrieving public url for the video we just uploaded
+    video_url = supabase.storage.from_(user).get_public_url(bucket_path)
+    print(f"Uploaded video to supabase at {user}/{bucket_path}")
+    return video_url
 
 
 video_bp = Blueprint("video_bp", __name__)
@@ -133,8 +165,13 @@ def create_video():
     combine_frames(data["sessionDir"])
 
     # combining the muted video and audio (saved to sessionDir/final.mp4)
-    generate_video(data["sessionDir"])
+    video_path = generate_video(data["sessionDir"])
 
     # cleaning up resources (deleting audio and frame directories, as well as intermediate output files)
     clean_up(data["sessionDir"])
-    return jsonify({"message": "video created"})
+
+    # upload the file to supabase using TUS protocol
+    with open(video_path, "rb") as file:
+        video_url = upload_video(file, str(data["user"]), str(data["session"]))
+
+    return jsonify({"url": video_url})

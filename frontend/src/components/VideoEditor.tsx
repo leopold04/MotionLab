@@ -18,6 +18,8 @@ function VideoEditor() {
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(5);
 
+  const userID = "1234";
+
   /**
    * Effect hook that runs when the animation name changes.
    * It calls the switchAnimation function to update the animation
@@ -175,10 +177,12 @@ function VideoEditor() {
    * Sends a request to generate a video with the current animation settings.
    * This function constructs a video data object containing user info,
    * video info, and animation info, and sends it to the server via a POST request.
+   *
+   * The request returns the URL of the video we generated, then uploaded to supabase
    */
   async function sendGenerationRequest() {
     let videoData = {
-      userInfo: { userID: 1234, sessionID: Date.now() % 100 },
+      userInfo: { userID: userID, sessionID: Date.now() % 100 },
       videoInfo: { duration: duration },
       animationInfo: { animationName: animationName, config: configRef.current },
     };
@@ -189,7 +193,9 @@ function VideoEditor() {
         body: JSON.stringify(videoData),
       });
       const data = await response.json();
-      console.log(data);
+      // url of video we generated, then uploaded to supabase bucket
+      const videoURL = data["url"];
+      console.log("Video URL:", videoURL);
     } catch (error) {
       console.log(error);
     }
@@ -233,6 +239,7 @@ function VideoEditor() {
       const formData = new FormData();
       // add the bytes of the file to our form data array
       formData.append("filename", file.name);
+      formData.append("userID", userID);
       formData.append("file", file);
 
       // send the bytes of our file to the backend

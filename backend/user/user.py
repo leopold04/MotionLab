@@ -18,16 +18,14 @@ content_map = {
     "png": "image/png"
 }
 
-# returns file extension
-
 
 def get_file_extension(filename):
+    '''Returns the extension of a file'''
     return filename.split(".")[1]
-
-# returns a list of bucket NAMES
 
 
 def create_bucket(name: str):
+    '''Creates a bucket for a user if it does not already exist'''
     response = supabase.storage.list_buckets()
     buckets = []
     for bucket in response:
@@ -45,11 +43,12 @@ def upload_asset():
     # look up flask.Request in docs for other info
     file = request.files['file']
     filename = request.form["filename"]
+    userID = request.form["userID"]
     bytes = file.read()
 
     # make the bucket for the user if it does not exist
-    username = "user1234"
-    create_bucket(username)
+    # change get user function
+    create_bucket(userID)
     extension = get_file_extension(filename)
 
     if (extension == "wav"):
@@ -57,10 +56,9 @@ def upload_asset():
     else:
         bucket_path = "assets/images/" + filename
 
-    response = supabase.storage.from_(username).upload(
+    response = supabase.storage.from_(userID).upload(
         file=bytes, path=bucket_path, file_options={"content-type": content_map[extension], "upsert": "true"})
 
-    file_url = supabase.storage.from_(username).get_public_url(bucket_path)
+    file_url = supabase.storage.from_(userID).get_public_url(bucket_path)
     # returning the URL of the file in a supabase bucket
-    print(file_url)
     return jsonify({"url": file_url})
