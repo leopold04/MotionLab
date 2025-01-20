@@ -3,7 +3,7 @@ from flask import Blueprint, Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import json
-
+from user.user import create_bucket
 import ffmpeg
 from pydub import AudioSegment
 import time
@@ -110,6 +110,10 @@ def generate_video(session_dir: str):
     ffmpeg.output(video, audio, final_video, vcodec='libx264',
                   acodec='aac', strict='experimental', loglevel='quiet').run()
     print("Final video generated and saved to", final_video)
+
+
+def upload_video():
+    pass
 
 
 video_bp = Blueprint("video_bp", __name__)

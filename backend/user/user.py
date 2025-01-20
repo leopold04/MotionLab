@@ -27,16 +27,13 @@ def get_file_extension(filename):
 # returns a list of bucket NAMES
 
 
-def get_buckets():
+def create_bucket(name: str):
     response = supabase.storage.list_buckets()
     buckets = []
     for bucket in response:
         buckets.append(bucket.name)
-    return buckets
-
-
-def create_bucket(name: str):
-    response = supabase.storage.create_bucket(name, options={"public": True})
+    if name not in buckets:
+        supabase.storage.create_bucket(name, options={"public": True})
 
 
 user_bp = Blueprint("user_bp", __name__)
@@ -52,8 +49,7 @@ def upload_asset():
 
     # make the bucket for the user if it does not exist
     username = "user1234"
-    if username not in get_buckets():
-        create_bucket(username)
+    create_bucket(username)
     extension = get_file_extension(filename)
 
     if (extension == "wav"):
