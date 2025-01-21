@@ -3,34 +3,36 @@ import Vector from "./vector.js";
 import Box from "./box.js";
 import Ring from "./ring.js";
 import Arc from "./arc.js";
-const g = 0.01;
+import { loadImage } from "canvas";
 class Particle {
   // filled circles, elastic collision with fixed mass
 
   // (x,y) is the CENTER of the particle (this is different for square class)
   pos: Vector;
   vel: Vector;
+  gravity: number;
   radius: number;
   color: string;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   container: Ring | Box;
+  image: HTMLImageElement | any;
   // prettier-ignore
-  constructor(x: number, y: number, radius: number, dx: number, dy: number,
+  constructor(x: number, y: number, radius: number, dx: number, dy: number, gravity: number,
              container: Ring | Box, color: string, canvas: any, ctx: any) {
     this.pos = new Vector(x, y);
     this.radius = radius;
     this.vel = new Vector(dx, dy);
+    this.gravity = gravity;
     this.canvas = canvas;
     this.ctx = ctx;
     this.container = container;
     this.color = color;
-    // number of decimal places to round to when doing corrections
 
   }
 
   move() {
-    this.vel.y += g;
+    this.vel.y += this.gravity;
     this.pos.x += this.vel.x;
     this.pos.y += this.vel.y;
 
@@ -63,7 +65,7 @@ class Particle {
         this.vel = Vector.clone(new_vel);
         // ensuring there is no loss of energy over time
         // might need to tweak this value
-        this.vel.y -= g / 2;
+        this.vel.y -= this.gravity / 2;
         let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
         this.pos = Vector.add(this.container.pos, new_pos);
         emitter.emit("collision");
@@ -82,7 +84,7 @@ class Particle {
         // rotation code
         //  this.vel = Vector.add(this.vel, Vector.mul(tangent, this.container.rotationSpeed));
         // to prevent energy loss
-        this.vel.y -= g / 2;
+        this.vel.y -= this.gravity / 2;
         let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
         this.pos = Vector.add(this.container.pos, new_pos);
         emitter.emit("collision");
@@ -92,10 +94,24 @@ class Particle {
 
   draw() {
     // filling circle
+
     this.ctx.fillStyle = this.color;
     this.ctx.beginPath();
     this.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     this.ctx.fill();
+    if (this.image) {
+      this.ctx.drawImage(
+        this.image,
+        this.pos.x - this.radius,
+        this.pos.y - this.radius,
+        this.radius * 2,
+        this.radius * 2
+      );
+    }
+  }
+
+  async setImage(url: string) {
+    this.image = await loadImage(url);
   }
 
   /*
@@ -134,8 +150,8 @@ class Particle {
       // cloning because simply setting p1.vel = pv1 is making it a reference
       p1.vel = Vector.clone(pv1);
       p2.vel = Vector.clone(pv2);
-      p1.vel.y -= g / 2;
-      p2.vel.y -= g / 2;
+      p1.vel.y -= p1.gravity / 2;
+      p2.vel.y -= p2.gravity / 2;
     }
   }
 

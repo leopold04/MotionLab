@@ -4,6 +4,5 @@
   "background_color": "color",
   "particle_1_color": "color",
   "particle_2_color": "color",
-  "collision_sound": "audio",
-  "resolution": "resolution"
+  "collision_sound": "audio"
 }

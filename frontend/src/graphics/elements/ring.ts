@@ -17,6 +17,7 @@ class Ring {
 
   draw() {
     this.ctx.strokeStyle = "blue";
+    this.ctx.lineWidth = this.radius * 0.01;
     this.ctx.beginPath();
     this.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
     this.ctx.stroke();

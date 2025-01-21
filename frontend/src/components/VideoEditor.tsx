@@ -12,7 +12,7 @@ function VideoEditor() {
   const [formElements, setFormElements] = useState<[string, any, InputType][]>([]);
   const [animationName, setAnimationName] = useState("particle-ring");
   const configRef = useRef<any>(null);
-
+  const [resolution, setResolution] = useState("720p");
   const [isRunning, setIsRunning] = useState(false);
   const intervalID = useRef<any>(null);
   const [time, setTime] = useState(0);
@@ -69,7 +69,6 @@ function VideoEditor() {
     const data = await response.json();
     configRef.current = data[animation];
     let elementList = await createElementList(configRef.current);
-    console.log(elementList);
     setFormElements(elementList);
   }
 
@@ -115,10 +114,11 @@ function VideoEditor() {
     }
     try {
       await getDefaultConfigs(animationName);
-      console.log(configRef.current);
       const module = await import(/* @vite-ignore */ animationPath);
       AnimationClassRef.current = module.default;
       animationRef.current = new AnimationClassRef.current(configRef.current);
+      // waiting for assets to load
+      await animationRef.current.load();
       animationRef.current.draw();
       animationRef.current.pause();
     } catch (err) {
@@ -139,6 +139,8 @@ function VideoEditor() {
     const module = await import(/* @vite-ignore */ animationPath);
     AnimationClassRef.current = module.default;
     animationRef.current = new AnimationClassRef.current(configRef.current);
+    // waiting for assets to load
+    await animationRef.current.load();
     animationRef.current.draw();
     pause();
     setTime(0);
@@ -151,7 +153,7 @@ function VideoEditor() {
   async function randomizeAnimation() {
     const seed = 1000 * Math.random();
     configRef.current["seed"] = seed;
-    resetAnimation();
+    await resetAnimation();
   }
   function play() {
     animationRef.current.play();
@@ -201,7 +203,7 @@ function VideoEditor() {
     }
   }
 
-  function updateConfig(setting: string, value: any) {
+  async function updateConfig(setting: string, value: any) {
     // updating the config
     configRef.current[setting] = value;
 
@@ -218,14 +220,13 @@ function VideoEditor() {
       })
     );
     // reset the animation
-    resetAnimation();
+    await resetAnimation();
   }
 
   function handleColorChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
     // setting = "bg_color" | "particle_color" ...
     // event.target.value = a css color
     updateConfig(setting, event.target.value);
-    console.log(configRef.current);
     resetAnimation();
   }
 
@@ -258,13 +259,14 @@ function VideoEditor() {
       }
     }
   }
-  function setResolution(resolution: string) {
+  function updateResolution(newResolution: string) {
+    setResolution(newResolution);
     const videoResolutions: { [key: string]: number[] } = {
       "480p": [480, 854],
       "720p": [720, 1280],
       "1080p": [1080, 1920],
     };
-    let [width, height] = videoResolutions[resolution];
+    let [width, height] = videoResolutions[newResolution];
     updateConfig("canvas_width", width);
     updateConfig("canvas_height", height);
   }
@@ -330,13 +332,25 @@ function VideoEditor() {
               <option value="square-box">Square Box</option>
             </select>
             <div className="resolution-group">
-              <button className="button" type="button" onClick={() => setResolution("480p")}>
+              <button
+                className={"resolution-button " + (resolution == "480p" ? "selected" : "")}
+                type="button"
+                onClick={() => updateResolution("480p")}
+              >
                 480p
               </button>
-              <button className="button" type="button" onClick={() => setResolution("720p")}>
+              <button
+                className={"resolution-button " + (resolution == "720p" ? "selected" : "")}
+                type="button"
+                onClick={() => updateResolution("720p")}
+              >
                 720p
               </button>
-              <button className="button" type="button" onClick={() => setResolution("1080p")}>
+              <button
+                className={"resolution-button " + (resolution == "1080p" ? "selected" : "")}
+                type="button"
+                onClick={() => updateResolution("1080p")}
+              >
                 1080p
               </button>
             </div>

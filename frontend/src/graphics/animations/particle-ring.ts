@@ -2,7 +2,7 @@ import emitter from "../utils/emitter.js";
 import AnimationConfig from "../utils/animation-config.js";
 import Particle from "../elements/particle.js";
 import Ring from "../elements/ring.js";
-import { createCanvas, Canvas, CanvasRenderingContext2D } from "canvas";
+import { createCanvas, Canvas, CanvasRenderingContext2D, Image, loadImage } from "canvas";
 
 class BounceParticle {
   canvas: HTMLCanvasElement | Canvas;
@@ -30,13 +30,38 @@ class BounceParticle {
       this.canvas.width = config["canvas_width"];
       this.canvas.height = config["canvas_height"];
     }
+    // scaling the animation appropriately (default is 720p)
+    let scaleFactor;
+    switch (config["canvas_width"]) {
+      case 480:
+        scaleFactor = 2 / 3;
+        break;
+      case 720:
+        scaleFactor = 1;
+        break;
+      case 1080:
+        scaleFactor = 3 / 2;
+        break;
+      default:
+        scaleFactor = 1;
+        break;
+    }
     const centerX = this.canvas.width / 2;
     const centerY = this.canvas.height / 2;
-    this.ring = new Ring(200, this.canvas, this.ctx);
+    // position settings
+    const ringRadius = 0.8 * 360 * scaleFactor;
+    const p1Radius = 80 * scaleFactor;
+    const p2Radius = 80 * scaleFactor;
+    const [p1vx, p1vy] = [2, 4].map((x) => scaleFactor * x);
+    const [p2vx, p2vy] = [4, 2].map((x) => scaleFactor * x);
+
+    const gravity = 0.01 * scaleFactor;
+
+    this.ring = new Ring(ringRadius, this.canvas, this.ctx);
     // prettier-ignore
-    this.p1 = new Particle(centerX, centerY, 25, 0, 3, this.ring, config["particle_1_color"]! ,this.canvas, this.ctx);
+    this.p1 = new Particle(centerX, centerY, p1Radius, p1vx, p1vy, gravity, this.ring, config["particle_1_color"]!,this.canvas, this.ctx);
     // prettier-ignore
-    this.p2 = new Particle(centerX, centerY, 25, 3, 0, this.ring, config["particle_2_color"]!, this.canvas, this.ctx);
+    this.p2 = new Particle(centerX, centerY, p2Radius, p2vx, p2vy, gravity, this.ring, config["particle_2_color"]!,this.canvas, this.ctx);
 
     this.particles = [this.p1, this.p2];
     this.seed = config["seed"] as number;
@@ -60,6 +85,19 @@ class BounceParticle {
       }
     }
     this.frame++;
+  }
+
+  // loading images
+  async load() {
+    try {
+      for (let p of this.particles) {
+        let imgURL =
+          "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png";
+        await p.setImage(imgURL);
+      }
+    } catch (error) {
+      console.log("error loading images");
+    }
   }
 
   // drawing all things

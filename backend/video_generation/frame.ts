@@ -15,8 +15,7 @@ let sessionDir = "";
 let audioDir = "";
 let animationName = "";
 let audioTimeline = {};
-// The output directory will store all the frames as image files. Later, we can include a user-specific identifier to avoid naming conflicts in production environments.
-// Later, we can include a user-specific identifier to avoid naming conflicts in production environments.
+
 let config: AnimationConfig;
 const fps = 60; // Frames per second for both the generated frames and the final video
 
@@ -28,8 +27,11 @@ async function run(animationName: string) {
     const module = await import(`../../frontend/src/graphics/animations/${animationName}.js`);
     const Animation = module.default;
     const animation = new Animation(config);
+    // waiting for all assets to load in
+    await animation.load();
     createDirectories();
-    writeFrames(animation);
+    // waiting for all frames to be written
+    await writeFrames(animation);
     let timeElapsed = (Date.now() - startTime) / 1000;
     console.log(`Generation completed in ${timeElapsed}s`);
   } catch (error) {
@@ -67,14 +69,14 @@ function createDirectories() {
   }
 }
 
-function writeFrames(animation: any) {
+async function writeFrames(animation: any) {
   console.log("Starting frame generation");
   const totalFrames = fps * duration; // Total number of frames, calculated as fps * duration (30 FPS * 10 seconds = 300 frames)
   // Loop through each frame and create it using the `createFrame` method of the Animation class
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     // creating frame
-    animation.update();
-    animation.draw();
+    await animation.update();
+    await animation.draw();
     // making frame path for image
     const framePath = path.join(frameDir, `frame${String(frameIndex).padStart(4, "0")}.png`);
     const buffer = animation.canvas.toBuffer("image/png");
@@ -126,14 +128,3 @@ app.post("/video/create_frames", async (request, response) => {
 app.listen(3000, () => {
   console.log("Express app running on port 3000");
 });
-
-/*
-- make frames in ts
-- send request (timeline body) to python to add audio & make final video
-- upload final product to supabase with resumable upload
-- grab urls from supabase bucket to preview in 'my videos'
-- create download url for frontend
-- 
-
-
-*/
