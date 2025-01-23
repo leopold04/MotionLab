@@ -10,7 +10,8 @@ function VideoEditor() {
   const animationRef = useRef<any>(null);
   const AnimationClassRef = useRef<any>(null);
   const [formElements, setFormElements] = useState<[string, any, InputType][]>([]);
-  const [animationName, setAnimationName] = useState("particle-ring");
+  const [animationName, setAnimationName] = useState<string>("particle-ring");
+  const [animationNameMap, setAnimationNameMap] = useState<{ [key: string]: string }>({});
   const configRef = useRef<any>(null);
   const [resolution, setResolution] = useState("720p");
   const [isRunning, setIsRunning] = useState(false);
@@ -19,6 +20,12 @@ function VideoEditor() {
   const [duration, setDuration] = useState(5);
 
   const userID = "1234";
+
+  const videoResolutions: { [key: string]: number[] } = {
+    "480p": [480, 854],
+    "720p": [720, 1280],
+    "1080p": [1080, 1920],
+  };
 
   /**
    * Effect hook that runs when the animation name changes.
@@ -65,11 +72,16 @@ function VideoEditor() {
    * @param {string} animation - The name of the animation to get configs for.
    */
   async function getDefaultConfigs(animation: string) {
-    const response = await fetch("/settings/default-configs.json");
+    const response = await fetch("http://localhost:8000/user/default_configs");
     const data = await response.json();
     configRef.current = data[animation];
     let elementList = await createElementList(configRef.current);
     setFormElements(elementList);
+    let nameMap: { [key: string]: string } = {};
+    for (let file_name of Object.keys(data)) {
+      nameMap[file_name] = data[file_name]["name"];
+    }
+    setAnimationNameMap(nameMap);
   }
 
   /**
@@ -88,7 +100,7 @@ function VideoEditor() {
    *          with their values and input types.
    */
   async function createElementList(configuration: AnimationConfig): Promise<[string, any, InputType][]> {
-    const response = await fetch("/settings/element-map.json");
+    const response = await fetch("http://localhost:8000/user/element_map");
     const elementMap = await response.json();
     let configObject: object = configuration;
     let configList = Object.entries(configObject);
@@ -261,11 +273,7 @@ function VideoEditor() {
   }
   function updateResolution(newResolution: string) {
     setResolution(newResolution);
-    const videoResolutions: { [key: string]: number[] } = {
-      "480p": [480, 854],
-      "720p": [720, 1280],
-      "1080p": [1080, 1920],
-    };
+
     let [width, height] = videoResolutions[newResolution];
     updateConfig("canvas_width", width);
     updateConfig("canvas_height", height);
@@ -327,32 +335,32 @@ function VideoEditor() {
           <form id="animation-form">
             <label>Choose an animation template</label>
             <select name="animations" id="animation-selection" value={animationName} onChange={handleAnimationChange}>
-              <option value="particle-ring">Particle Ring</option>
-              <option value="particle-arc">Particle Arc</option>
-              <option value="square-box">Square Box</option>
+              {/** Setting the option selects to the names of our animations
+               * nameMap = {"particle-ring": "two particles"}
+               * nameMap["file_name"] = "animation_name"
+               *
+               */}
+              {Object.keys(animationNameMap).map((name) => {
+                return (
+                  <option key={name} value={name}>
+                    {animationNameMap[name]}
+                  </option>
+                );
+              })}
             </select>
             <div className="resolution-group">
-              <button
-                className={"resolution-button " + (resolution == "480p" ? "selected" : "")}
-                type="button"
-                onClick={() => updateResolution("480p")}
-              >
-                480p
-              </button>
-              <button
-                className={"resolution-button " + (resolution == "720p" ? "selected" : "")}
-                type="button"
-                onClick={() => updateResolution("720p")}
-              >
-                720p
-              </button>
-              <button
-                className={"resolution-button " + (resolution == "1080p" ? "selected" : "")}
-                type="button"
-                onClick={() => updateResolution("1080p")}
-              >
-                1080p
-              </button>
+              {Object.keys(videoResolutions).map((videoResolution) => {
+                return (
+                  <button
+                    className={"resolution-button " + (resolution == videoResolution ? "selected" : "")}
+                    type="button"
+                    onClick={() => updateResolution(videoResolution)}
+                    key={videoResolution}
+                  >
+                    {videoResolution}
+                  </button>
+                );
+              })}
             </div>
             <label htmlFor="duration">Video Duration:</label>
             <input

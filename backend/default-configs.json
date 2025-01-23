@@ -1,23 +1,26 @@
 {
   "particle-ring": {
+    "name": "Two particles bouncing",
     "seed": 3,
-    "canvas_width": 480,
-    "canvas_height": 854,
+    "canvas_width": 720,
+    "canvas_height": 1280,
     "background_color": "#ebedf0",
     "particle_1_color": "#88b0db",
     "particle_2_color": "#729c8c",
     "collision_sound": "https://xsuhlhkrnljnqhiugfpo.supabase.co/storage/v1/object/public/media/images/sfx_lowhealth_alarmloop1.wav?t=2025-01-18T01%3A26%3A31.208Z"
   },
   "particle-arc": {
+    "name": "PARC",
     "seed": 0,
-    "canvas_width": 480,
-    "canvas_height": 854,
+    "canvas_width": 720,
+    "canvas_height": 1280,
     "background_color": "#edd3d1"
   },
   "square-box": {
+    "name": "SBOX",
     "seed": 0,
-    "canvas_width": 480,
-    "canvas_height": 854,
+    "canvas_width": 720,
+    "canvas_height": 1280,
     "background_color": "#bbdaed"
   }
 }

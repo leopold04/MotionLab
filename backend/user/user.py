@@ -62,3 +62,22 @@ def upload_asset():
     file_url = supabase.storage.from_(userID).get_public_url(bucket_path)
     # returning the URL of the file in a supabase bucket
     return jsonify({"url": file_url})
+
+
+@user_bp.route("/user/default_configs", methods=["GET"])
+def read_defaults():
+    file = "default-configs.json"
+
+    if os.path.exists(file):
+        with open(file, "r") as f:
+            return json.load(f)
+    return "Fail", 400
+
+
+@user_bp.route("/user/element_map", methods=["GET"])
+def read_elements():
+    file = "element-map.json"
+    if os.path.exists(file):
+        with open(file, "r") as f:
+            return json.load(f)
+    return "Fail", 400
