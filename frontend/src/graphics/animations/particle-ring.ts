@@ -50,8 +50,8 @@ class BounceParticle {
     const centerY = this.canvas.height / 2;
     // position settings
     const ringRadius = 0.8 * 360 * scaleFactor;
-    const p1Radius = 80 * scaleFactor;
-    const p2Radius = 80 * scaleFactor;
+    const p1Radius = 40 * scaleFactor;
+    const p2Radius = 40 * scaleFactor;
     const [p1vx, p1vy] = [2, 4].map((x) => scaleFactor * x);
     const [p2vx, p2vy] = [4, 2].map((x) => scaleFactor * x);
 
@@ -87,17 +87,17 @@ class BounceParticle {
     this.frame++;
   }
 
-  // loading images
+  // loading images (TODO: add loading all audio)
   async load() {
-    try {
-      for (let p of this.particles) {
-        let imgURL =
-          "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png";
-        await p.setImage(imgURL);
-      }
-    } catch (error) {
-      console.log("error loading images");
-    }
+    // try {
+    //   for (let p of this.particles) {
+    //     let imgURL =
+    //       "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png";
+    //     await p.setImage(imgURL);
+    //   }
+    // } catch (error) {
+    //   console.log("error loading images");
+    // }
   }
 
   // drawing all things

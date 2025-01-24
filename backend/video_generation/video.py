@@ -12,8 +12,8 @@ from user.user import supabase
 
 
 def download_audio_file(url: str, path: str):
-    # currently only accepting .wav files for audio
-    query_params = {"downloadformat": "wav"}
+    # currently only accepting .mp3 files for audio
+    query_params = {"downloadformat": "mp3"}
     response = requests.get(url, params=query_params)
     if response.status_code == 200:
         with open(path, 'wb') as file:
@@ -37,7 +37,7 @@ def generate_audio(audio_timeline: list[dict[str, str]], duration: int, session_
         download_audio_file(audio_url, audio_path)
 
         # formatting audio file
-        audio = AudioSegment.from_wav(audio_path)
+        audio = AudioSegment.from_mp3(audio_path)
         # start time of audio position in MILLISECONDS
         # going from frame to MS: frame / 60 * 1000 = frame * 1000 // 60
         audio_position: int = int(entry["frame"]) * 1000 // 60
@@ -46,8 +46,8 @@ def generate_audio(audio_timeline: list[dict[str, str]], duration: int, session_
         final_audio = final_audio.overlay(audio, position=audio_position)
 
     # Export the final combined audio to a file
-    output_audio = os.path.join(session_dir, "output.wav")
-    final_audio.export(output_audio, format="wav")
+    output_audio = os.path.join(session_dir, "output.mp3")
+    final_audio.export(output_audio, format="mp3")
     print(f"Audio has been generated and saved to {output_audio}")
 
 
@@ -94,7 +94,7 @@ def clean_up(session_dir: str):
         os.rmdir(audio_dir)
 
     # removing intermediate video and audio file
-    output_audio = os.path.join(session_dir, "output.wav")
+    output_audio = os.path.join(session_dir, "output.mp3")
     output_video = os.path.join(session_dir, "output.mp4")
     for file in [output_video, output_audio]:
         if file:
@@ -103,7 +103,7 @@ def clean_up(session_dir: str):
 
 
 def generate_video(session_dir: str):
-    output_audio = os.path.join(session_dir, "output.wav")
+    output_audio = os.path.join(session_dir, "output.mp3")
     output_video = os.path.join(session_dir, "output.mp4")
     final_video = os.path.join(session_dir, "final.mp4")
 
@@ -148,6 +148,7 @@ def upload_video(file, user, session):
     return video_url
 
 
+# creation of video blueprint
 video_bp = Blueprint("video_bp", __name__)
 
 
@@ -156,9 +157,8 @@ def create_video():
     # receiving json containing: user, session, sessionDir, duration, audioTimeline
     data = request.get_json()
     print("Request received from JS backend")
-    print(json.dumps(data, indent=4))
 
-    # generating audio (saved to sessionDir/output.wav)
+    # generating audio (saved to sessionDir/output.mp3)
     generate_audio(data["audioTimeline"], data["duration"], data["sessionDir"])
 
     # generating muted video (saved to sessionDir/output.mp4)

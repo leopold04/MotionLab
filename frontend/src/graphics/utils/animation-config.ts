@@ -9,6 +9,7 @@ type AnimationConfig = {
   particle_size?: number;
   collision_sound?: string;
   seed?: number;
+  name?: string;
 };
 
 export default AnimationConfig;

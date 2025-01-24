@@ -21,3 +21,8 @@
   background-color: #f7eac6;
   aspect-ratio: 1080/1920;
 }
+video {
+  border-radius: 20px;
+  width: 100%;
+  height: 100%;
+}

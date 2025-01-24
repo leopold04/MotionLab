@@ -13,7 +13,7 @@ supabase: Client = create_client(supabase_url, supabase_key)
 
 # maps file extensions to the appropriate http header
 content_map = {
-    "wav": "audio/x-wav",
+    "mp3": "audio/mpeg",
     "jpeg": "image/jpeg",
     "png": "image/png"
 }
@@ -51,7 +51,7 @@ def upload_asset():
     create_bucket(userID)
     extension = get_file_extension(filename)
 
-    if (extension == "wav"):
+    if (extension == "mp3"):
         bucket_path = "assets/sounds/" + filename
     else:
         bucket_path = "assets/images/" + filename
@@ -67,7 +67,6 @@ def upload_asset():
 @user_bp.route("/user/default_configs", methods=["GET"])
 def read_defaults():
     file = "default-configs.json"
-
     if os.path.exists(file):
         with open(file, "r") as f:
             return json.load(f)
