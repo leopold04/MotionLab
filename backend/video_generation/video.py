@@ -9,6 +9,7 @@ from pydub import AudioSegment
 import time
 from tusclient import client
 from user.user import supabase
+from video_generation.utils import remove_directory
 
 
 def download_audio_file(url: str, path: str):
@@ -18,9 +19,11 @@ def download_audio_file(url: str, path: str):
     if response.status_code == 200:
         with open(path, 'wb') as file:
             file.write(response.content)
+    else:
+        print(f"Failed to download audio: HTTP {response.status_code}")
 
 
-def generate_audio(audio_timeline: list[dict[str, str]], duration: int, session_dir: str):
+def generate_audio(audio_timeline: list[dict], duration: int, session_dir: str):
     # audio_timeline = [{"audio": url, "frame": int}, {"audio": url, "frame": int}]
     # Create an empty audio segment to start with (duration is in ms)
     final_audio = AudioSegment.silent(duration=duration * 1000)
@@ -38,6 +41,8 @@ def generate_audio(audio_timeline: list[dict[str, str]], duration: int, session_
 
         # formatting audio file
         audio = AudioSegment.from_mp3(audio_path)
+        if ("audio_duration" in entry.keys()):
+            audio = audio[0:entry["audio_duration"]]
         # start time of audio position in MILLISECONDS
         # going from frame to MS: frame / 60 * 1000 = frame * 1000 // 60
         audio_position: int = int(entry["frame"]) * 1000 // 60
@@ -75,23 +80,9 @@ def combine_frames(session_dir: str):
 def clean_up(session_dir: str):
     audio_dir = os.path.join(session_dir, "audio")
     frame_dir = os.path.join(session_dir, "frames")
-    # removing every frame in the frame_dir
-    if os.path.exists(frame_dir):
-        for file in os.listdir(frame_dir):
-            file_path = os.path.join(frame_dir, file)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-        # Remove the now-empty output directory
-        os.rmdir(frame_dir)
-
-    # removing every file in the audio_dir
-    if os.path.exists(audio_dir):
-        for file in os.listdir(audio_dir):
-            file_path = os.path.join(audio_dir, file)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-        # Remove the now-empty output directory
-        os.rmdir(audio_dir)
+    # removing every frame in the frame_dir and every audio in the audio dir
+    remove_directory(frame_dir)
+    remove_directory(audio_dir)
 
     # removing intermediate video and audio file
     output_audio = os.path.join(session_dir, "output.mp3")

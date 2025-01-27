@@ -10,6 +10,11 @@ type AnimationConfig = {
   collision_sound?: string;
   seed?: number;
   name?: string;
+  duration: number;
+  sound: string;
+  sequence: string;
+  sequence_fps: number;
+  sequence_frame_count: number;
 };
 
 export default AnimationConfig;

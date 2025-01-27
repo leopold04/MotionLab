@@ -28,6 +28,7 @@ async function run(animationName: string) {
     const Animation = module.default;
     const animation = new Animation(config);
     // waiting for all assets to load in
+    console.log("Loading assets:");
     await animation.load();
     createDirectories();
     // waiting for all frames to be written
@@ -107,6 +108,7 @@ app.post("/video/create_frames", async (request, response) => {
     duration: duration,
     audioTimeline: audioTimeline,
   };
+  console.log(info);
 
   // sending request to flask endpoint to start video generation process
   console.log("Sending video creation request");

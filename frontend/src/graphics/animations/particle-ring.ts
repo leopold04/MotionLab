@@ -118,6 +118,8 @@ class BounceParticle {
       this.audioTimeline.push({ audio: sound_url, frame: this.frame });
     } else {
       // path is relative to the public folder
+      // change this so that we load all sounds in initially, then restart them when its time to play
+      // use audio.currentTime = 0 to reset, then audio.play()
       const a = new Audio(sound_url);
       a.play();
     }

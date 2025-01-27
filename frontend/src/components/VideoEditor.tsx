@@ -4,8 +4,8 @@ import AnimationConfig from "../graphics/utils/animation-config";
 
 function VideoEditor() {
   // this lets us only include certain default configs to render (not seed)
-  type InputType = "color" | "audio" | "image";
-  let InputTypes: InputType[] = ["color", "audio", "image"];
+  type InputType = "color" | "audio" | "image" | "gif";
+  let InputTypes: InputType[] = ["color", "audio", "image", "gif"];
 
   const animationRef = useRef<any>(null);
   const AnimationClassRef = useRef<any>(null);
@@ -17,7 +17,7 @@ function VideoEditor() {
   const [isRunning, setIsRunning] = useState(false);
   const intervalID = useRef<any>(null);
   const [time, setTime] = useState(0);
-  const [duration, setDuration] = useState(5);
+  const [duration, setDuration] = useState<number>(0);
 
   const userID = "1234";
 
@@ -82,6 +82,7 @@ function VideoEditor() {
       nameMap[file_name] = data[file_name]["name"];
     }
     setAnimationNameMap(nameMap);
+    setDuration(data[animation]["duration"]);
   }
 
   /**
@@ -264,8 +265,18 @@ function VideoEditor() {
         // getting the url response from our backend
         const data = await response.json();
         const url = data["url"];
+        console.log(data);
         // updating the config with the sound url
-        updateConfig(setting, url);
+        if (data["content-type"] === "image/gif") {
+          // we have a base url to a bucket instead (for frame sequence)
+          updateConfig("sequence_frame_count", data["gif_frame_count"]);
+          updateConfig("sequence_fps", data["gif_fps"]);
+          updateConfig("sequence", url);
+        } else {
+          // we have a file with only 1 url
+          // "collision_sound" = "supabase.com/mybucket/sound.wav"
+          updateConfig(setting, url);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -279,7 +290,10 @@ function VideoEditor() {
     updateConfig("canvas_height", height);
   }
   function handleDurationChange(event: React.ChangeEvent<HTMLInputElement>) {
+    // duration as a number
+    let d: number = parseInt(event.target.value);
     setDuration(parseInt(event.target.value));
+    updateConfig("duration", d);
   }
   function formatTime(time: number, duration: number) {
     // time is in format s.00
@@ -314,6 +328,15 @@ function VideoEditor() {
         <div key={setting}>
           <label htmlFor={setting}>{setting}</label>
           <input type="color" id={setting} value={value} onChange={(e) => handleColorChange(e, setting)} />
+        </div>
+      );
+    },
+
+    gif: (setting: string, _: any) => {
+      return (
+        <div key={setting}>
+          <label htmlFor={setting}>{setting}</label>
+          <input type="file" id={setting} accept="image/gif" onChange={(e) => handleFileChange(e, setting)} />
         </div>
       );
     },
