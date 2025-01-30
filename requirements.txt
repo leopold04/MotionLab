@@ -27,7 +27,9 @@ itsdangerous==2.2.0
 Jinja2==3.1.5
 MarkupSafe==3.0.2
 multidict==6.1.0
+numpy==2.2.2
 packaging==24.2
+pillow==11.1.0
 postgrest==0.19.1
 propcache==0.2.1
 pydantic==2.10.5
@@ -35,6 +37,7 @@ pydantic_core==2.27.2
 pydub==0.25.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
+pytz==2024.2
 realtime==2.1.0
 requests==2.32.3
 six==1.17.0
