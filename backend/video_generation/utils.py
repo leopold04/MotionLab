@@ -81,8 +81,16 @@ def extract_frames(bytes, userID):
     # be sure to return the fps of the
     print("Frames extracted and compressed successfully!")
     # number of frames we extracted
+
     frame_count = len(os.listdir(output_folder))
+
     # fps of our gif
     frames_per_second = get_fps(bytes)
 
     return {"output_folder": output_folder, "frame_count": frame_count, "fps": frames_per_second}
+
+
+'''
+with open("dance.gif", "rb") as f:
+    extract_frames(f.read(), "0")
+'''

@@ -89,15 +89,18 @@ class BounceParticle {
 
   // loading images (TODO: add loading all audio)
   async load() {
-    // try {
-    //   for (let p of this.particles) {
-    //     let imgURL =
-    //       "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png";
-    //     await p.setImage(imgURL);
-    //   }
-    // } catch (error) {
-    //   console.log("error loading images");
-    // }
+    let startTime = Date.now();
+    try {
+      for (let p of this.particles) {
+        let imgURL =
+          "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png";
+        await p.setImage(imgURL);
+      }
+    } catch (error) {
+      console.log("error loading images");
+    }
+    let loadTime = (Date.now() - startTime) / 1000;
+    return loadTime;
   }
 
   // drawing all things

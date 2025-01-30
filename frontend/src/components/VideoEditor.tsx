@@ -209,6 +209,7 @@ function VideoEditor() {
       });
       const data = await response.json();
       // url of video we generated, then uploaded to supabase bucket
+      console.log(data);
       const videoURL = data["url"];
       console.log("Video URL:", videoURL);
     } catch (error) {
@@ -343,7 +344,7 @@ function VideoEditor() {
   };
   return (
     <div className="container">
-      <h1>Editor</h1>
+      <h1>Studio</h1>
       <div className="video-editor">
         <div className="animation-column">
           <canvas id="canvas"></canvas>

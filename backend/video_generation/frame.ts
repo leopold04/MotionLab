@@ -15,12 +15,13 @@ let sessionDir = "";
 let audioDir = "";
 let animationName = "";
 let audioTimeline = {};
-
+let frameWriteTime = 0;
+let assetLoadTime = 0;
+// map by width
 let config: AnimationConfig;
 const fps = 60; // Frames per second for both the generated frames and the final video
 
 async function run(animationName: string) {
-  let startTime = Date.now();
   try {
     // Dynamically import the correct animation file
     // import relative to current file
@@ -28,13 +29,12 @@ async function run(animationName: string) {
     const Animation = module.default;
     const animation = new Animation(config);
     // waiting for all assets to load in
-    console.log("Loading assets:");
-    await animation.load();
+    console.log("Loading assets...");
+    assetLoadTime = await animation.load();
     createDirectories();
     // waiting for all frames to be written
-    await writeFrames(animation);
-    let timeElapsed = (Date.now() - startTime) / 1000;
-    console.log(`Generation completed in ${timeElapsed}s`);
+    console.log("Creating and writing frames...");
+    frameWriteTime = await writeFrames(animation);
   } catch (error) {
     console.error("Error loading animation:", error);
   }
@@ -70,7 +70,9 @@ function createDirectories() {
   }
 }
 
+// create the individual frame PNGs and write them to disk storage
 async function writeFrames(animation: any) {
+  let startTime = Date.now();
   console.log("Starting frame generation");
   const totalFrames = fps * duration; // Total number of frames, calculated as fps * duration (30 FPS * 10 seconds = 300 frames)
   // Loop through each frame and create it using the `createFrame` method of the Animation class
@@ -87,6 +89,8 @@ async function writeFrames(animation: any) {
     }
   }
   audioTimeline = animation.audioTimeline;
+  let timeElapsed = (Date.now() - startTime) / 1000;
+  return timeElapsed;
 }
 
 const app = express();
@@ -103,10 +107,14 @@ app.post("/video/create_frames", async (request, response) => {
   await run(animationName);
   let info: any = {
     user: userID,
+    template: animationName,
+    resolution: `${config["canvas_width"]}p`,
     session: sessionID,
     sessionDir: sessionDir,
     duration: duration,
     audioTimeline: audioTimeline,
+    assetLoadTime: assetLoadTime,
+    frameWriteTime: frameWriteTime,
   };
   console.log(info);
 

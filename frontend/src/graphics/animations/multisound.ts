@@ -105,10 +105,23 @@ class BounceParticle {
   // loading images (TODO: add loading all audio)
   // TODO: create failsafe if assets are not loaded in yet
   async load() {
+    let startTime = Date.now();
     // sequenceURL = "supabase_url.com/bucket_path/"
     for (let i = 1; i < this.sequenceFrameCount; i++) {
+      // change to image source
       let imgURL = this.sequenceURL + `frame${i.toString().padStart(4, "0")}.png`;
+      if (typeof window === "undefined" && imgURL.startsWith("https://") == false) {
+        // our backend can't access public assets with the notation we use on the frontend (relative to public folder)
+        // ex: loadImage("frame_sequences/toothless/frame0000.png") won't work. we need to do loadImage("../frontend/ the rest")
+
+        // if we are loading a public asset when we are in our backend, add the frontend path
+        imgURL = "../frontend/public/" + imgURL;
+      }
+
       let img = await loadImage(imgURL);
+      if (img === null) {
+        throw new Error("image could not be loaded");
+      }
       this.images.push(img);
     }
 
@@ -117,6 +130,9 @@ class BounceParticle {
     } else {
       this.sound = new Audio(this.songURL);
     }
+
+    let loadTime = (Date.now() - startTime) / 1000;
+    return loadTime;
   }
 
   // drawing all things
@@ -136,7 +152,6 @@ class BounceParticle {
   TODO: algorithmically determine how long each sound should be for headless generation
   dont add to audio timeline until the end
   instead collect times of bounces, then make audio timeline based off of those
-
   */
 
   // renders a single frame of the video to the screen
@@ -153,7 +168,7 @@ class BounceParticle {
       let imgY = this.centerY - imgH / 2;
       this.ctx.drawImage(currentImage, imgX, imgY, imgW, imgH);
     } catch (error) {
-      console.log(error);
+      console.log(currentImage);
     }
   }
 
@@ -203,7 +218,6 @@ class BounceParticle {
         // ex: if gif is 60fps, then didx = 1, so every frame, we advance 1 gif frame
         // if gif is 20fps, then didx = 20/60=1/3, so every 3 frames, we advance 1 gif frame
         this.didx = this.sequenceFPS / this.fps;
-        console.log(this.didx);
       }
     }
     this.last = this.frame;
