@@ -8,7 +8,7 @@
     "background_color": "#ebedf0",
     "particle_1_color": "#88b0db",
     "particle_2_color": "#729c8c",
-    "collision_sound": "https://xsuhlhkrnljnqhiugfpo.supabase.co/storage/v1/object/public/media/sounds/sfx_sounds_button7.mp3"
+    "collision_sound": "sound_effects/button2.mp3"
   },
   "multisound": {
     "name": "1 song multiple sounds",
@@ -18,9 +18,9 @@
     "canvas_height": 1280,
     "background_color": "#dadce3",
     "particle_1_color": "#88b0db",
-    "collision_sound": "https://xsuhlhkrnljnqhiugfpo.supabase.co/storage/v1/object/public/media/songs/driftveil.mp3",
-    "sequence": "https://xsuhlhkrnljnqhiugfpo.supabase.co/storage/v1/object/public/media/frame_sequences/dance/",
-    "sequence_frame_count": 100,
+    "collision_sound": "songs/driftveil.mp3",
+    "sequence": "frame_sequences/toothless/",
+    "sequence_frame_count": 180,
     "sequence_fps": 20
   },
   "particle-arc": {
