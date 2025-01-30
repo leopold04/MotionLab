@@ -18,7 +18,7 @@
     "canvas_height": 1280,
     "background_color": "#dadce3",
     "particle_1_color": "#88b0db",
-    "collision_sound": "songs/driftveil.mp3",
+    "collision_sound": "songs/rat.mp3",
     "sequence": "frame_sequences/toothless/",
     "sequence_frame_count": 180,
     "sequence_fps": 20

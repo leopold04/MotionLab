@@ -35,18 +35,26 @@ def create_bucket(name: str):
         supabase.storage.create_bucket(name, options={"public": True})
 
 
+def upload_file(user: str, bytes: bytes, bucket_path: str, content_type: str):
+    '''
+    uploads a file to a bucket in supabase
+    '''
+    response = supabase.storage.from_(user).upload(
+        file=bytes, path=bucket_path, file_options={"content-type": content_type, "upsert": "true"})
+
+
 user_bp = Blueprint("user_bp", __name__)
 
 
 @user_bp.route("/user/upload_file", methods=["POST"])
-def upload_asset():
+def upload_asset_to_supabase():
     # receiving file and filename from client
     # look up flask.Request in docs for other info
     file = request.files['file']
     filename = request.form["filename"]
     userID = request.form["userID"]
     bytes = file.read()
-
+    print("Asset received from the frontend")
     # make the bucket for the user if it does not exist
     # change get user function
     create_bucket(userID)
@@ -66,12 +74,13 @@ def upload_asset():
             gif_info = extract_frames(bytes, userID)
 
     if extension != "gif":
-        response = supabase.storage.from_(userID).upload(
-            file=bytes, path=bucket_path, file_options={"content-type": content_map[extension], "upsert": "true"})
+        # uploading the file
+        upload_file(userID, bytes, bucket_path, content_map[extension])
         # getting the url of the file we just uploaded
         file_url = supabase.storage.from_(userID).get_public_url(bucket_path)
         print(file_url)
         # returning the URL of the file in a supabase bucket
+        print("Asset successfully uploaded to supabase")
         return jsonify({"url": file_url}, {"content-type": content_map[extension]})
     else:
         try:
@@ -80,8 +89,8 @@ def upload_asset():
                 frame = f"{gif_info["output_folder"]
                            }/frame{str(i).zfill(4)}.png"
                 with open(frame, "rb") as f:
-                    response = supabase.storage.from_(userID).upload(
-                        file=f.read(), path=f"{bucket_path}/frame{str(i).zfill(4)}.png", file_options={"content-type": content_map[extension], "upsert": "true"})
+                    upload_file(userID, f.read(), f"{
+                                bucket_path}/frame{str(i).zfill(4)}.png", content_map[extension])
         except Exception as e:
             # if we get an error (such as if all the frames don't get exported properly), we delete the folder
             print(e)

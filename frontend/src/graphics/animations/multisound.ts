@@ -106,6 +106,9 @@ class BounceParticle {
   // TODO: create failsafe if assets are not loaded in yet
   async load() {
     let startTime = Date.now();
+    let imagePromises = [];
+    // initializing our image array to be full of null values so we can index into them properly later
+    this.images = new Array(this.sequenceFrameCount - 1).fill(null);
     // sequenceURL = "supabase_url.com/bucket_path/"
     for (let i = 1; i < this.sequenceFrameCount; i++) {
       // change to image source
@@ -117,15 +120,14 @@ class BounceParticle {
         // if we are loading a public asset when we are in our backend, add the frontend path
         imgURL = "../frontend/public/" + imgURL;
       }
-
-      let img = await loadImage(imgURL);
-      if (img === null) {
-        throw new Error("image could not be loaded");
-      }
-      this.images.push(img);
+      // adding a promise to the queue and adding an image to the image array at index i - 1 (since i starts at 1)
+      let imagePromise = this.loadImageAsync(imgURL, i - 1);
+      imagePromises.push(imagePromise);
     }
 
-    // lmao fix this syntax
+    // wait for all images to be loaded concurrently
+    await Promise.all(imagePromises);
+
     if (typeof window === "undefined") {
     } else {
       this.sound = new Audio(this.songURL);
@@ -133,6 +135,20 @@ class BounceParticle {
 
     let loadTime = (Date.now() - startTime) / 1000;
     return loadTime;
+  }
+
+  // Helper function to load an image and assign it to the correct index
+  async loadImageAsync(imgURL: string, index: number) {
+    try {
+      const img = await loadImage(imgURL);
+      if (img === null) {
+        throw new Error("Image could not be loaded");
+      }
+      // Assign the image directly to its correct index
+      this.images[index] = img; // Using the correct index (i - 1) in the original code
+    } catch (error) {
+      console.error(`Error loading image at ${imgURL}:`, error);
+    }
   }
 
   // drawing all things
@@ -251,7 +267,9 @@ class BounceParticle {
   // Pause the animation
   pause() {
     this.playing = false;
-    this.sound.pause();
+    if (this.sound != null) {
+      this.sound.pause();
+    }
     if (this.requestID !== null) {
       cancelAnimationFrame(this.requestID); // Cancel the animation frame request
       this.requestID = null;

@@ -306,7 +306,7 @@ function VideoEditor() {
       return (
         <div key={setting}>
           <label htmlFor={setting}>{setting}</label>
-          <input type="file" id={setting} accept="audio/x-wav" onChange={(e) => handleFileChange(e, setting)} />
+          <input type="file" id={setting} accept="audio/mpeg" onChange={(e) => handleFileChange(e, setting)} />
         </div>
       );
     },
