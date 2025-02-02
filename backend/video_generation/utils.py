@@ -3,16 +3,18 @@ import os
 from pydub import AudioSegment
 import requests
 from PIL import Image  # Importing PIL for image processing
+import shutil
 
 
-def remove_directory(path):
-    if os.path.exists(path):
-        for file in os.listdir(path):
-            file_path = os.path.join(path, file)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-        # Remove the now-empty output directory
-        os.rmdir(path)
+def create_directory(path):
+    '''
+    create directory if it does not exist
+    '''
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path, exist_ok=True)
+        except OSError as e:
+            print(e)
 
 
 def get_fps(bytes) -> int:

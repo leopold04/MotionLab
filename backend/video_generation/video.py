@@ -9,9 +9,9 @@ from pydub import AudioSegment
 import time
 from tusclient import client
 from user.user import supabase
-from video_generation.utils import remove_directory
 import pytz
 import datetime
+import shutil
 
 
 def download_audio_file(url: str, path: str):
@@ -93,8 +93,8 @@ def clean_up(session_dir: str):
     audio_dir = os.path.join(session_dir, "audio")
     frame_dir = os.path.join(session_dir, "frames")
     # removing every frame in the frame_dir and every audio in the audio dir
-    remove_directory(frame_dir)
-    remove_directory(audio_dir)
+    shutil.rmtree(frame_dir)
+    shutil.rmtree(audio_dir)
 
     # removing intermediate video and audio file
     output_audio = os.path.join(session_dir, "output.mp3")
@@ -212,4 +212,4 @@ def create_video():
     # updating the videos table in our database
     supabase.table("Videos").insert(video_info).execute()
     # returning the video info
-    return jsonify(video_info)
+    return jsonify(video_info), 200

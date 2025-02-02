@@ -2,7 +2,12 @@ import "../styles/VideoEditor.css";
 import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
 
-function VideoEditor() {
+interface Props {
+  userID: string;
+  sessionID: string;
+}
+
+function VideoEditor({ userID, sessionID }: Props) {
   // this lets us only include certain default configs to render (not seed)
   type InputType = "color" | "audio" | "image" | "gif";
   let InputTypes: InputType[] = ["color", "audio", "image", "gif"];
@@ -19,13 +24,33 @@ function VideoEditor() {
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState<number>(0);
 
-  const userID = "1234";
-
   const videoResolutions: { [key: string]: number[] } = {
     "480p": [480, 854],
     "720p": [720, 1280],
     "1080p": [1080, 1920],
   };
+
+  // setting up directories for adding assets and video creation
+  async function setupDirectories(userID: string, sessionID: string) {
+    let userInfo = { userID: userID, sessionID: sessionID };
+    try {
+      // sends request to backend to make directories for the user's video
+      await fetch("http://localhost:8000/user/setup_directories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userInfo),
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    console.log("Current session: " + sessionID);
+    if (sessionID) {
+      setupDirectories(userID, sessionID);
+    }
+  }, [sessionID]);
 
   /**
    * Effect hook that runs when the animation name changes.
@@ -34,7 +59,7 @@ function VideoEditor() {
    */
   useEffect(() => {
     switchAnimation(animationName);
-    console.log(animationName);
+    console.log("Animation: " + animationName);
   }, [animationName]);
 
   // we can use a state for the time here because even if the page re renders (since the state of is running changes)

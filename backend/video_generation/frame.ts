@@ -7,17 +7,14 @@ import fetch from "node-fetch";
 import AnimationConfig from "../../frontend/src/graphics/utils/animation-config.js";
 
 let duration: number;
-// temp vars. change later
 let frameDir = "";
 let userID = "";
 let sessionID = 0;
 let sessionDir = "";
-let audioDir = "";
 let animationName = "";
 let audioTimeline = {};
 let frameWriteTime = 0;
 let assetLoadTime = 0;
-// map by width
 let config: AnimationConfig;
 const fps = 60; // Frames per second for both the generated frames and the final video
 
@@ -31,42 +28,11 @@ async function run(animationName: string) {
     // waiting for all assets to load in
     console.log("Loading assets...");
     assetLoadTime = await animation.load();
-    createDirectories();
     // waiting for all frames to be written
     console.log("Creating and writing frames...");
     frameWriteTime = await writeFrames(animation);
   } catch (error) {
     console.error("Error loading animation:", error);
-  }
-}
-
-function createDirectories() {
-  const videoDir = "../videos";
-  // unique directory for each user (relative to backend)
-  let userDir = path.join(videoDir, `files_${userID}`);
-  // unique directory for each user's session
-  sessionDir = path.join(userDir, `session_${sessionID}`);
-  // Directory to store the individual animation frames as PNG files
-  frameDir = path.join(sessionDir, "frames");
-  // Directory to store audio wav files
-  audioDir = path.join(sessionDir, "audio");
-
-  // making video directory
-  if (!fs.existsSync(videoDir)) {
-    // If the directory doesn't exist, create it
-    fs.mkdirSync(videoDir);
-  }
-  // making user directory
-  if (!fs.existsSync(userDir)) {
-    // If the directory doesn't exist, create it
-    fs.mkdirSync(userDir);
-  }
-
-  // making session, frame, and audio directories
-  if (!fs.existsSync(sessionDir)) {
-    fs.mkdirSync(sessionDir);
-    fs.mkdirSync(frameDir);
-    fs.mkdirSync(audioDir);
   }
 }
 

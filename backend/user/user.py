@@ -5,7 +5,9 @@ from flask_cors import CORS
 import requests
 import json
 from supabase import create_client, Client
-from video_generation.utils import extract_frames, get_fps, remove_directory
+from video_generation.utils import extract_frames, get_fps, create_directory
+import time
+import shutil
 load_dotenv()
 supabase_url: str = str(os.environ.get("SUPABASE_URL"))
 supabase_key: str = str(os.environ.get("SUPABASE_KEY"))
@@ -45,9 +47,12 @@ def upload_file(user: str, bytes: bytes, bucket_path: str, content_type: str):
 
 user_bp = Blueprint("user_bp", __name__)
 
+# change to upload to assets folder
+
 
 @user_bp.route("/user/upload_file", methods=["POST"])
 def upload_asset_to_supabase():
+    start_time = time.time()
     # receiving file and filename from client
     # look up flask.Request in docs for other info
     file = request.files['file']
@@ -94,14 +99,21 @@ def upload_asset_to_supabase():
         except Exception as e:
             # if we get an error (such as if all the frames don't get exported properly), we delete the folder
             print(e)
-            remove_directory(gif_info["output_folder"])
+            shutil.rmtree(gif_info["output_folder"])
             # returning the url of the bucket where all of the frames are stored
-        print("Successfully uploaded frame sequence to supabase")
+        print(f"Successfully uploaded frame sequence to supabase in {
+              time.time() - start_time} seconds")
         base_url = f"{
             supabase_url}/storage/v1/object/public/{userID}/{bucket_path}/"
         # removing the directory from our file system
-        remove_directory(gif_info["output_folder"])
+        shutil.rmtree(gif_info["output_folder"])
         return jsonify({"url": base_url, "gif_frame_count": gif_info["frame_count"], "gif_fps": gif_info["fps"], "content-type": content_map[extension]})
+
+
+# downloads a gif from a url, creates a directory for the frames in the user's video assets dir
+# then dumps all the frames into that directory
+def download_gif(url: str, user: str):
+    pass
 
 
 @user_bp.route("/user/default_configs", methods=["GET"])
@@ -120,3 +132,57 @@ def read_elements():
         with open(file, "r") as f:
             return json.load(f)
     return "Fail", 400
+
+
+@user_bp.route("/user/setup_directories", methods=["POST"])
+def setup_directories():
+    data = request.get_json()
+    userID, sessionID = data["userID"], data["sessionID"]
+    # relative to the directory where we run the main python file (our current working directory)
+    video_dir = "../videos"
+    user_dir = os.path.join(video_dir, userID)
+    session_dir = os.path.join(user_dir, sessionID)
+    # assets the user either chooses or adds
+    # we load audio, images, etc from this directory by serving them as static files
+    asset_dir = os.path.join(session_dir, "assets")
+    sound_dir = os.path.join(asset_dir, "sounds")
+    image_dir = os.path.join(asset_dir, "images")
+    sequence_dir = os.path.join(asset_dir, "frame_sequences")
+
+    # full animation frames go here
+    frame_dir = os.path.join(session_dir, "frames")
+    # fully processed audio goes here
+    audio_dir = os.path.join(session_dir, "audio")
+
+    try:
+        create_directory(user_dir)
+        create_directory(session_dir)
+        create_directory(asset_dir)
+        create_directory(sound_dir)
+        create_directory(image_dir)
+        create_directory(sequence_dir)
+        create_directory(frame_dir)
+        create_directory(audio_dir)
+        return jsonify({"message": "successfully set up directories"})
+    except Exception as e:
+        print(e)
+        return jsonify({"message": "could not create directories"})
+
+
+@user_bp.route("/user/clear_session", methods=["POST", "OPTIONS"])
+def clear_session_directory():
+    # we sent raw bytes from our frontend, so we have to decode it
+    data = request.data
+    # decoding it into string format
+    data_str = data.decode("utf-8")
+    userInfo = json.loads(data_str)
+    userID, sessionID = userInfo["userID"], userInfo["sessionID"]
+    video_dir = "../videos"
+    user_dir = os.path.join(video_dir, userID)
+    session_dir = os.path.join(user_dir, sessionID)
+    try:
+        shutil.rmtree(session_dir)
+        return jsonify({"message": f"successfully removed {session_dir}"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"message": f"could not remove {session_dir}"}), 400

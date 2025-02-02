@@ -134,6 +134,7 @@ class BounceParticle {
     }
 
     let loadTime = (Date.now() - startTime) / 1000;
+    console.log(`Loaded all frames in ${loadTime} seconds`);
     return loadTime;
   }
 
