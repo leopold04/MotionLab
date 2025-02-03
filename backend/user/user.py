@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv, dotenv_values
-from flask import Blueprint, Flask, request, jsonify
+from flask import Blueprint, Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import requests
 import json
@@ -118,20 +118,17 @@ def download_gif(url: str, user: str):
 
 @user_bp.route("/user/default_configs", methods=["GET"])
 def read_defaults():
-    file = "default-configs.json"
-    if os.path.exists(file):
-        with open(file, "r") as f:
-            return json.load(f)
-    return "Fail", 400
+    return send_from_directory("./", "default-configs.json")
 
 
 @user_bp.route("/user/element_map", methods=["GET"])
 def read_elements():
-    file = "element-map.json"
-    if os.path.exists(file):
-        with open(file, "r") as f:
-            return json.load(f)
-    return "Fail", 400
+    return send_from_directory("./", "element-map.json")
+
+
+@user_bp.route("/user/<animation_name>")
+def fetch_animation(animation_name):
+    return send_from_directory("../frontend/src/graphics/animations/", "particle-ring.ts", mimetype="application/javascript")
 
 
 @user_bp.route("/user/setup_directories", methods=["POST"])
