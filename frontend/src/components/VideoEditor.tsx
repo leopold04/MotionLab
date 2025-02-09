@@ -1,8 +1,8 @@
 import "../styles/VideoEditor.css";
-import Selector from "./Selector";
 import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
-
+import VideoEditorContext from "./VideoEditorContext";
+import ControlPanel from "./ControlPanel";
 interface Props {
   userID: string;
   sessionID: string;
@@ -326,89 +326,56 @@ function VideoEditor({ userID, sessionID }: Props) {
     return time.toFixed(2) + " / " + duration.toFixed(2);
   }
 
-  let inputMap: { [key in InputType]: (setting: string, value: any) => JSX.Element } = {
-    audio: (setting: string, _: any) => {
-      return <Selector selectorType="audio" setting={setting} handleChange={handleFileChange} />;
-    },
-    image: (setting: string, _: any) => {
-      return <Selector selectorType="image" setting={setting} handleChange={handleFileChange} />;
-    },
-
-    color: (setting: string, value: any) => {
-      return <Selector selectorType="color" setting={setting} defaultValue={value} handleChange={handleColorChange} />;
-    },
-
-    gif: (setting: string, _: any) => {
-      return <Selector selectorType="gif" setting={setting} handleChange={handleFileChange} />;
-    },
-  };
-
   // the actual video editor component
   return (
-    <div className="container">
-      <h1>Studio</h1>
-      <div className="video-editor">
-        <div className="animation-column">
-          <canvas id="canvas"></canvas>
-          <h3 className="time">{formatTime(time, duration)}</h3>
-          <button onClick={play}>Play</button>
-          <button onClick={pause}>Pause</button>
-          <button onClick={resetAnimation}>Reset</button>
-          <button onClick={randomizeAnimation}>Randomize</button>
-          <button onClick={sendGenerationRequest}>Generate</button>
-        </div>
-        <div className="config-column">
-          <form id="animation-form">
-            <label>Choose an animation template</label>
-            <select name="animations" id="animation-selection" value={animationName} onChange={handleAnimationChange}>
-              {/** Setting the option selects to the names of our animations
-               * nameMap = {"particle-ring": "two particles"}
-               * nameMap["file_name"] = "animation_name"
-               *
-               */}
-              {Object.keys(animationNameMap).map((name) => {
-                return (
-                  <option key={name} value={name}>
-                    {animationNameMap[name]}
-                  </option>
-                );
-              })}
-            </select>
-            <div className="resolution-group">
-              {Object.keys(videoResolutions).map((videoResolution) => {
-                return (
-                  <button
-                    className={"resolution-button " + (resolution == videoResolution ? "selected" : "")}
-                    type="button"
-                    onClick={() => updateResolution(videoResolution)}
-                    key={videoResolution}
-                  >
-                    {videoResolution}
-                  </button>
-                );
-              })}
-            </div>
-            <label htmlFor="duration">Video Duration:</label>
-            <input
-              type="number"
-              id="duration"
-              name="duration"
-              min="0"
-              max="65"
-              onChange={handleDurationChange}
-              placeholder={duration.toString()}
-            />
-          </form>
-          <form id="config-form">
-            {formElements
-              // only choosing settings with the correct input type
-              .filter(([, , inputType]) => InputTypes.includes(inputType))
-              // creating elements based on our map (ex: map[color]("bg_color", "green") => ...)
-              .map(([setting, value, inputType]) => inputMap[inputType](setting, value))}
-          </form>
+    <VideoEditorContext.Provider
+      value={{
+        handleColorChange,
+        handleFileChange,
+
+        resolution,
+        updateResolution,
+        duration,
+        handleDurationChange,
+        formElements,
+        InputTypes,
+      }}
+    >
+      <div className="container">
+        <h1>Studio</h1>
+        <div className="video-editor">
+          <div className="animation-column">
+            <canvas id="canvas"></canvas>
+            <h3 className="time">{formatTime(time, duration)}</h3>
+            <button onClick={play}>Play</button>
+            <button onClick={pause}>Pause</button>
+            <button onClick={resetAnimation}>Reset</button>
+            <button onClick={randomizeAnimation}>Randomize</button>
+            <button onClick={sendGenerationRequest}>Generate</button>
+          </div>
+          <div className="config-column">
+            <form id="animation-form">
+              <label>Choose an animation template</label>
+              <select name="animations" id="animation-selection" value={animationName} onChange={handleAnimationChange}>
+                {/** Setting the option selects to the names of our animations
+                 * nameMap = {"particle-ring": "two particles"}
+                 * nameMap["file_name"] = "animation_name"
+                 *
+                 */}
+                {Object.keys(animationNameMap).map((name) => {
+                  return (
+                    <option key={name} value={name}>
+                      {animationNameMap[name]}
+                    </option>
+                  );
+                })}
+              </select>
+            </form>
+            <ControlPanel />
+          </div>
         </div>
       </div>
-    </div>
+    </VideoEditorContext.Provider>
   );
 }
 
