@@ -36,12 +36,7 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
     }
 
     let customColorSelector = (
-<<<<<<< HEAD
-      <div key="color-selector">
-        <label htmlFor={setting}>{setting}</label>
-=======
       <div key="custom-color-selector">
->>>>>>> 3eb588e (Added video player component and icons from fontawesome)
         {/* default value set to "#88b0db" for now... find a way to change it later*/}
         <input
           type="color"
@@ -61,9 +56,6 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
         {colorButtons}
       </div>
     );
-
-    colorButtons.push(customColorSelector);
-    return colorButtons;
   }
 
   // start with just upload button, then we will combine it with color selector
