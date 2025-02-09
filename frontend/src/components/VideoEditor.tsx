@@ -263,10 +263,17 @@ function VideoEditor({ userID, sessionID }: Props) {
     await resetAnimation();
   }
 
-  function handleColorChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
+  function handleColorChange(color: string | React.ChangeEvent<HTMLInputElement>, setting: string) {
     // setting = "bg_color" | "particle_color" ...
     // event.target.value = a css color
-    updateConfig(setting, event.target.value);
+    if (typeof color === "string") {
+      // coming from a button click
+      updateConfig(setting, color);
+      console.log("Color changed to " + color);
+    } else {
+      // coming from a html color input
+      updateConfig(setting, color.target.value);
+    }
     resetAnimation();
   }
 
@@ -332,7 +339,6 @@ function VideoEditor({ userID, sessionID }: Props) {
       value={{
         handleColorChange,
         handleFileChange,
-
         resolution,
         updateResolution,
         duration,

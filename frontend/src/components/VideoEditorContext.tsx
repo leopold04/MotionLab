@@ -2,7 +2,7 @@ import React, { createContext } from "react";
 type InputType = "color" | "audio" | "image" | "gif";
 
 interface ContextType {
-  handleColorChange: (event: React.ChangeEvent<HTMLInputElement>, setting: string) => void;
+  handleColorChange: (color: any, setting: string) => void;
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>, setting: string) => void;
   resolution: string;
   updateResolution: (newResolution: string) => void;

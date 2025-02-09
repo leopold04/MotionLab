@@ -18,14 +18,33 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
 
   const { handleColorChange, handleFileChange } = context;
 
-  function colorSelector(setting: string, defaultValue: string): JSX.Element {
-    return (
-      <div>
+  function colorSelector(setting: string, defaultValue: string) {
+    let colors = ["#3262a8", "#6a947f", "#dbae9e"];
+    let colorButtons = [];
+    for (let color of colors) {
+      // making a button for each color
+      let colorButton = (
+        <button
+          type="button"
+          key={color}
+          className="color-button"
+          style={{ backgroundColor: color }}
+          onClick={() => handleColorChange(color, setting)}
+        ></button>
+      );
+      colorButtons.push(colorButton);
+    }
+
+    let customColorSelector = (
+      <div key="color-selector">
         <label htmlFor={setting}>{setting}</label>
         {/* default value set to "#88b0db" for now... find a way to change it later*/}
         <input type="color" id={setting} value={defaultValue} onChange={(e) => handleColorChange(e, setting)} />
       </div>
     );
+
+    colorButtons.push(customColorSelector);
+    return colorButtons;
   }
 
   // start with just upload button, then we will combine it with color selector

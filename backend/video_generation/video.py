@@ -1,8 +1,6 @@
 import os
-from flask import Blueprint, Flask, request, jsonify
-from flask_cors import CORS
+from flask import Blueprint, request, jsonify
 import requests
-import json
 from user.user import create_bucket
 import ffmpeg
 from pydub import AudioSegment
@@ -86,14 +84,15 @@ def combine_frames(session_dir: str):
     time_elapsed = time.time() - start_time
     return time_elapsed
 
-# Function to clean up the generated frames after the video is created
-
 
 def clean_up(session_dir: str):
+    '''
+    Function to clean up files after video creation
+    '''
     asset_dir = os.path.join(session_dir, "assets")
     audio_dir = os.path.join(session_dir, "audio")
     frame_dir = os.path.join(session_dir, "frames")
-    # removing every frame in the frame_dir and every audio in the audio dir
+    # removing all the intermediate directories
     shutil.rmtree(frame_dir)
     shutil.rmtree(audio_dir)
     shutil.rmtree(asset_dir)

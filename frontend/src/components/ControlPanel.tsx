@@ -62,6 +62,7 @@ function ControlPanel() {
       if (inputType == "color") {
         selector = <Selector selectorType="color" setting={setting} defaultValue={value} key={setting} />;
       } else {
+        // only the color selector will have a default value for now
         selector = <Selector selectorType={inputType} setting={setting} key={setting} />;
       }
       selectors.push(selector);
