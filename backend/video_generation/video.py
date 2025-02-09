@@ -90,11 +90,13 @@ def combine_frames(session_dir: str):
 
 
 def clean_up(session_dir: str):
+    asset_dir = os.path.join(session_dir, "assets")
     audio_dir = os.path.join(session_dir, "audio")
     frame_dir = os.path.join(session_dir, "frames")
     # removing every frame in the frame_dir and every audio in the audio dir
     shutil.rmtree(frame_dir)
     shutil.rmtree(audio_dir)
+    shutil.rmtree(asset_dir)
 
     # removing intermediate video and audio file
     output_audio = os.path.join(session_dir, "output.mp3")

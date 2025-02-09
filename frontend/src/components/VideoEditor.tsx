@@ -1,4 +1,5 @@
 import "../styles/VideoEditor.css";
+import Selector from "./Selector";
 import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
 
@@ -300,7 +301,6 @@ function VideoEditor({ userID, sessionID }: Props) {
           updateConfig("sequence", url);
         } else {
           // we have a file with only 1 url
-          // "collision_sound" = "supabase.com/mybucket/sound.wav"
           updateConfig(setting, url);
         }
       } catch (error) {
@@ -328,45 +328,22 @@ function VideoEditor({ userID, sessionID }: Props) {
 
   let inputMap: { [key in InputType]: (setting: string, value: any) => JSX.Element } = {
     audio: (setting: string, _: any) => {
-      return (
-        <div key={setting}>
-          <label htmlFor={setting}>{setting}</label>
-          <input type="file" id={setting} accept="audio/mpeg" onChange={(e) => handleFileChange(e, setting)} />
-        </div>
-      );
+      return <Selector selectorType="audio" setting={setting} handleChange={handleFileChange} />;
     },
     image: (setting: string, _: any) => {
-      return (
-        <div key={setting}>
-          <label htmlFor={setting}>{setting}</label>
-          <input
-            type="file"
-            id={setting}
-            accept="image/png, image/jpeg, image/jpg"
-            onChange={(e) => handleFileChange(e, setting)}
-          />
-        </div>
-      );
+      return <Selector selectorType="image" setting={setting} handleChange={handleFileChange} />;
     },
 
     color: (setting: string, value: any) => {
-      return (
-        <div key={setting}>
-          <label htmlFor={setting}>{setting}</label>
-          <input type="color" id={setting} value={value} onChange={(e) => handleColorChange(e, setting)} />
-        </div>
-      );
+      return <Selector selectorType="color" setting={setting} defaultValue={value} handleChange={handleColorChange} />;
     },
 
     gif: (setting: string, _: any) => {
-      return (
-        <div key={setting}>
-          <label htmlFor={setting}>{setting}</label>
-          <input type="file" id={setting} accept="image/gif" onChange={(e) => handleFileChange(e, setting)} />
-        </div>
-      );
+      return <Selector selectorType="gif" setting={setting} handleChange={handleFileChange} />;
     },
   };
+
+  // the actual video editor component
   return (
     <div className="container">
       <h1>Studio</h1>

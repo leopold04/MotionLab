@@ -126,11 +126,6 @@ def read_elements():
     return send_from_directory("./", "element-map.json")
 
 
-@user_bp.route("/user/<animation_name>")
-def fetch_animation(animation_name):
-    return send_from_directory("../frontend/src/graphics/animations/", "particle-ring.ts", mimetype="application/javascript")
-
-
 @user_bp.route("/user/setup_directories", methods=["POST"])
 def setup_directories():
     data = request.get_json()

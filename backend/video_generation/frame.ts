@@ -68,6 +68,8 @@ app.post("/video/create_frames", async (request, response) => {
   console.log(request.body);
   console.log("");
   ({ userID, sessionID } = request.body.userInfo);
+  sessionDir = `../videos/${userID}/${sessionID.toString()}`;
+  frameDir = path.join(sessionDir, "frames");
   ({ duration } = request.body.videoInfo);
   ({ animationName, config } = request.body.animationInfo);
   await run(animationName);

@@ -6,9 +6,10 @@ function Sidebar() {
       <h2>MotionLab</h2>
       <ul>
         <li>Create Video</li>
+        <li>My videos</li>
         <hr></hr>
-        <li id="support">Support</li>
-        <li id="settings">Settings</li>
+        <li>Join our discord</li>
+        <li>0 video credits: update plan</li>
         <hr></hr>
         <li id="profile">Profile</li>
       </ul>
