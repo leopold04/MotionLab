@@ -23,6 +23,7 @@ h1 {
   padding: 20px;
   background-color: #ccced2;
   border-radius: 20px;
+  gap: 40px;
 }
 
 .resolution-group {
@@ -50,17 +51,6 @@ h1 {
 }
 .resolution-button:last-child {
   border-right: none;
-}
-
-#canvas {
-  width: 80%;
-  aspect-ratio: 9/16;
-  border-radius: 20px;
-}
-.animation-column {
-  display: flex;
-  flex-direction: column;
-  width: 30%;
 }
 
 .config-column {

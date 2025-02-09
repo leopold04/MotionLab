@@ -2,7 +2,7 @@
 // color/image selector, audio selector (sfx, song, midi), gif (url just for now), resolution, duration
 import { useContext } from "react";
 import VideoEditorContext from "./VideoEditorContext";
-
+import "../styles/Selector.css";
 interface Props {
   selectorType: string;
   setting: string;
@@ -36,10 +36,29 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
     }
 
     let customColorSelector = (
+<<<<<<< HEAD
       <div key="color-selector">
         <label htmlFor={setting}>{setting}</label>
+=======
+      <div key="custom-color-selector">
+>>>>>>> 3eb588e (Added video player component and icons from fontawesome)
         {/* default value set to "#88b0db" for now... find a way to change it later*/}
-        <input type="color" id={setting} value={defaultValue} onChange={(e) => handleColorChange(e, setting)} />
+        <input
+          type="color"
+          className="custom-color-picker"
+          id={setting}
+          value={defaultValue}
+          onChange={(e) => handleColorChange(e, setting)}
+        />
+      </div>
+    );
+
+    colorButtons.push(customColorSelector);
+
+    return (
+      <div className="color-picker">
+        <p>{setting}</p>
+        {colorButtons}
       </div>
     );
 

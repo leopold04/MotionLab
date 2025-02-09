@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import VideoEditorContext from "./VideoEditorContext";
 import Selector from "./Selector";
-
+import "../styles/ControlPanel.css";
 // contains different selector settings (color, audio, gif, etc) and video export settings (duration, resolution)
 
 const videoResolutions: { [key: string]: number[] } = {
@@ -69,7 +69,7 @@ function ControlPanel() {
     }
   }
 
-  return <form id="config-form">{selectors}</form>;
+  return <form id="control-panel-form">{selectors}</form>;
 }
 
 export default ControlPanel;

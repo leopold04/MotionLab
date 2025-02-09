@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
 import VideoEditorContext from "./VideoEditorContext";
 import ControlPanel from "./ControlPanel";
+import VideoPlayer from "./VideoPlayer";
 interface Props {
   userID: string;
   sessionID: string;
@@ -221,7 +222,7 @@ function VideoEditor({ userID, sessionID }: Props) {
    *
    * The request returns the URL of the video we generated, then uploaded to supabase
    */
-  async function sendGenerationRequest() {
+  async function exportVideo() {
     let videoData = {
       userInfo: { userID: userID, sessionID: Date.now() % 100 },
       videoInfo: { duration: duration },
@@ -328,9 +329,14 @@ function VideoEditor({ userID, sessionID }: Props) {
     setDuration(parseInt(event.target.value));
     updateConfig("duration", d);
   }
-  function formatTime(time: number, duration: number) {
-    // time is in format s.00
-    return time.toFixed(2) + " / " + duration.toFixed(2);
+  function formatTime(): string {
+    const format = (seconds: number) => {
+      const minutes = Math.floor(seconds / 60); // Get the minutes
+      const secondsPart = (seconds % 60).toFixed(1); // Get the seconds with one decimal
+      return `${minutes}:${secondsPart.padStart(4, "0")}`; // Format to "m:ss.s"
+    };
+
+    return format(time) + " / " + format(duration);
   }
 
   // the actual video editor component
@@ -345,20 +351,18 @@ function VideoEditor({ userID, sessionID }: Props) {
         handleDurationChange,
         formElements,
         InputTypes,
+        play,
+        pause,
+        resetAnimation,
+        randomizeAnimation,
+        exportVideo,
+        formatTime,
+        isRunning,
       }}
     >
       <div className="container">
         <h1>Studio</h1>
         <div className="video-editor">
-          <div className="animation-column">
-            <canvas id="canvas"></canvas>
-            <h3 className="time">{formatTime(time, duration)}</h3>
-            <button onClick={play}>Play</button>
-            <button onClick={pause}>Pause</button>
-            <button onClick={resetAnimation}>Reset</button>
-            <button onClick={randomizeAnimation}>Randomize</button>
-            <button onClick={sendGenerationRequest}>Generate</button>
-          </div>
           <div className="config-column">
             <form id="animation-form">
               <label>Choose an animation template</label>
@@ -379,6 +383,7 @@ function VideoEditor({ userID, sessionID }: Props) {
             </form>
             <ControlPanel />
           </div>
+          <VideoPlayer />
         </div>
       </div>
     </VideoEditorContext.Provider>

@@ -1,0 +1,29 @@
+.video-player {
+  display: flex;
+  flex-direction: column;
+  width: 30%;
+  gap: 10px;
+}
+
+#control-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 30px;
+}
+
+.time {
+  align-self: center;
+  margin: 0px;
+}
+#canvas {
+  width: 80%;
+  aspect-ratio: 9/16;
+  border-radius: 20px;
+  align-self: center;
+}
+
+#export-button {
+  width: 40%;
+  align-self: center;
+}
