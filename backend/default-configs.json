@@ -7,8 +7,10 @@
     "canvas_height": 1280,
     "background_color": "#ebedf0",
     "particle_1_color": "#88b0db",
+    "particle_1_image": "frontend/public/images/arsenal.png",
     "particle_2_color": "#729c8c",
-    "collision_sound": "sound_effects/button2.mp3"
+    "particle_2_image": "",
+    "collision_sound": "frontend/public/sound_effects/button2.mp3"
   },
   "multisound": {
     "name": "1 song multiple sounds",
@@ -18,10 +20,10 @@
     "canvas_height": 1280,
     "background_color": "#dadce3",
     "particle_1_color": "#88b0db",
-    "collision_sound": "songs/rat.mp3",
-    "sequence": "frame_sequences/toothless/",
-    "sequence_frame_count": 180,
-    "sequence_fps": 20
+    "collision_sound": "frontend/public/songs/rat.mp3",
+    "sequence": "frontend/public/frame_sequences/mario",
+    "sequence_frame_count": 16,
+    "sequence_fps": 3
   },
   "particle-arc": {
     "name": "PARC",
@@ -31,7 +33,7 @@
     "background_color": "#edd3d1"
   },
   "square-box": {
-    "name": "SBOX",
+    "name": "Square Battle",
     "seed": 0,
     "canvas_width": 720,
     "canvas_height": 1280,

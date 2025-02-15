@@ -36,13 +36,8 @@ def generate_audio(audio_timeline: list[dict], duration: int, session_dir: str):
         audio_location: str = str(entry["audio"])
         # in session/audio directory, add audio_{index}
         audio_dir: str = os.path.join(session_dir, "audio")
-        # if our audio is coming from our db, then we download it
-        if (audio_location.startswith("https://")):
-            audio_path: str = os.path.join(audio_dir, "sound_" + str(index))
-            download_audio_file(audio_location, audio_path)
-        else:
-            # if not, it is just the filename
-            audio_path = os.path.join("../frontend/public", audio_location)
+        audio_path: str = os.path.join(audio_dir, "sound_" + str(index))
+        download_audio_file(audio_location, audio_path)
 
         # formatting audio file
         audio = AudioSegment.from_mp3(audio_path)

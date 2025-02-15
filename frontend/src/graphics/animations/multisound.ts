@@ -44,7 +44,8 @@ class BounceParticle {
     // loading in animation configurations
     this.duration = config["duration"] * this.fps;
     this.seed = config["seed"] as number;
-    this.songURL = config["collision_sound"] as string;
+    // change this
+    this.songURL = ("http://localhost:8000/user/get_asset/" + config["collision_sound"]) as string;
     this.sequenceURL = config["sequence"] as string;
     this.sequenceFPS = config["sequence_fps"] as number;
     this.sequenceFrameCount = config["sequence_frame_count"] as number;
@@ -75,9 +76,19 @@ class BounceParticle {
     const gravity = 0.25 * scaleFactor;
 
     this.ring = new Ring(ringRadius, this.canvas, this.ctx);
-    // prettier-ignore
-    this.p1 = new Particle(this.centerX, this.centerY, p1Radius, p1vx, p1vy, gravity, this.ring, config["particle_1_color"]!,this.canvas, this.ctx);
-    // prettier-ignore
+    this.p1 = new Particle(
+      this.centerX,
+      this.centerY,
+      p1Radius,
+      p1vx,
+      p1vy,
+      gravity,
+      this.ring,
+      config["particle_1_color"]!,
+      this.canvas,
+      this.ctx,
+      ""
+    );
 
     this.particles = [this.p1];
     this.ring.randomizeParticlePositions(this.particles, this.seed);
@@ -111,17 +122,10 @@ class BounceParticle {
     this.images = new Array(this.sequenceFrameCount - 1).fill(null);
     // sequenceURL = "supabase_url.com/bucket_path/"
     for (let i = 1; i < this.sequenceFrameCount; i++) {
-      // change to image source
-      let imgURL = this.sequenceURL + `frame${i.toString().padStart(4, "0")}.png`;
-      if (typeof window === "undefined" && imgURL.startsWith("https://") == false) {
-        // our backend can't access public assets with the notation we use on the frontend (relative to public folder)
-        // ex: loadImage("frame_sequences/toothless/frame0000.png") won't work. we need to do loadImage("../frontend/ the rest")
-
-        // if we are loading a public asset when we are in our backend, add the frontend path
-        imgURL = "../frontend/public/" + imgURL;
-      }
+      let framePath = this.sequenceURL + `/frame${i.toString().padStart(4, "0")}.png`;
+      let frameURL = "http://localhost:8000/user/get_asset/" + framePath;
       // adding a promise to the queue and adding an image to the image array at index i - 1 (since i starts at 1)
-      let imagePromise = this.loadImageAsync(imgURL, i - 1);
+      let imagePromise = this.loadImageAsync(frameURL, i - 1);
       imagePromises.push(imagePromise);
     }
 
@@ -185,7 +189,7 @@ class BounceParticle {
       let imgY = this.centerY - imgH / 2;
       this.ctx.drawImage(currentImage, imgX, imgY, imgW, imgH);
     } catch (error) {
-      console.log(currentImage);
+      console.log(this.imgIdx);
     }
   }
 

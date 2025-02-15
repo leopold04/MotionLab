@@ -224,7 +224,7 @@ function VideoEditor({ userID, sessionID }: Props) {
    */
   async function exportVideo() {
     let videoData = {
-      userInfo: { userID: userID, sessionID: Date.now() % 100 },
+      userInfo: { userID: userID, sessionID: sessionID },
       videoInfo: { duration: duration },
       animationInfo: { animationName: animationName, config: configRef.current },
     };
@@ -281,14 +281,13 @@ function VideoEditor({ userID, sessionID }: Props) {
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>, setting: string) {
     // checking if files array is not null
     if (event.target.files) {
-      // send form data to the backend so it can eventually get uploaded to supabase
-      // send back supabase url
-
       const file = event.target.files[0];
       const formData = new FormData();
       // add the bytes of the file to our form data array
       formData.append("filename", file.name);
+      // adding userID and sessionID to we know exactly where to place the files
       formData.append("userID", userID);
+      formData.append("sessionID", sessionID);
       formData.append("file", file);
 
       // send the bytes of our file to the backend
@@ -299,17 +298,17 @@ function VideoEditor({ userID, sessionID }: Props) {
         });
         // getting the url response from our backend
         const data = await response.json();
-        const url = data["url"];
+        const src = data["src"];
         console.log(data);
         // updating the config with the sound url
         if (data["content-type"] === "image/gif") {
           // we have a base url to a bucket instead (for frame sequence)
           updateConfig("sequence_frame_count", data["gif_frame_count"]);
           updateConfig("sequence_fps", data["gif_fps"]);
-          updateConfig("sequence", url);
+          updateConfig("sequence", src);
         } else {
           // we have a file with only 1 url
-          updateConfig(setting, url);
+          updateConfig(setting, src);
         }
       } catch (error) {
         console.log(error);

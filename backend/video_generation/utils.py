@@ -60,17 +60,14 @@ def compress_images(output_folder):
 
 
 # returns frame path, frame count, and fps
-def extract_frames(bytes, userID):
-    # later, make sure we are creating files in a unique place
+def extract_frames(bytes, filename, output_folder):
 
-    path = "file"
-    with open(path, "wb") as f:
+    with open(filename, "wb") as f:
         f.write(bytes)
-    output_folder = f"extracted{userID}"
     os.makedirs(output_folder, exist_ok=True)
 
     # Use FFmpeg to extract frames as PNG images (still images, not video)
-    ffmpeg.input(path).output(
+    ffmpeg.input(filename).output(
         f'{output_folder}/%04d.png',
         # Scale the frames to width 720 (height auto-calculated)
         vf="scale=720:-1", loglevel="quiet"
@@ -79,7 +76,7 @@ def extract_frames(bytes, userID):
     # Compress PNGs using PIL after extraction
     compress_images(output_folder)
     # Remove the video file from the filesystem after we are done
-    os.remove(path)
+    os.remove(filename)
     # be sure to return the fps of the
     print("Frames extracted and compressed successfully!")
     # number of frames we extracted
@@ -90,9 +87,3 @@ def extract_frames(bytes, userID):
     frames_per_second = get_fps(bytes)
 
     return {"output_folder": output_folder, "frame_count": frame_count, "fps": frames_per_second}
-
-
-'''
-with open("dance.gif", "rb") as f:
-    extract_frames(f.read(), "0")
-'''

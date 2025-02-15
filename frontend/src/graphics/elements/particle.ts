@@ -17,9 +17,10 @@ class Particle {
   ctx: CanvasRenderingContext2D;
   container: Ring | Box;
   image: HTMLImageElement | any;
+  imageSource: any;
   // prettier-ignore
   constructor(x: number, y: number, radius: number, dx: number, dy: number, gravity: number,
-             container: Ring | Box, color: string, canvas: any, ctx: any) {
+             container: Ring | Box, color: string, canvas: any, ctx: any, imageSource: string) {
     this.pos = new Vector(x, y);
     this.radius = radius;
     this.vel = new Vector(dx, dy);
@@ -28,6 +29,7 @@ class Particle {
     this.ctx = ctx;
     this.container = container;
     this.color = color;
+    this.imageSource = imageSource;
 
   }
 
@@ -93,12 +95,7 @@ class Particle {
   }
 
   draw() {
-    // filling circle
-
-    this.ctx.fillStyle = this.color;
-    this.ctx.beginPath();
-    this.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
-    this.ctx.fill();
+    // draw an image for our particle if it has already been set
     if (this.image) {
       this.ctx.drawImage(
         this.image,
@@ -107,11 +104,26 @@ class Particle {
         this.radius * 2,
         this.radius * 2
       );
+    } else {
+      // draw a circle with a color if we don't have an image or if it has not been set
+      this.ctx.fillStyle = this.color;
+      this.ctx.beginPath();
+      this.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI);
+      this.ctx.fill();
     }
   }
 
-  async setImage(url: string) {
-    this.image = await loadImage(url);
+  async setImage() {
+    // if we have an image source passed in, we set that to the particle's image
+    if (this.imageSource != "") {
+      // getting image from our backend
+      let src = "http://localhost:8000/user/get_asset/" + this.imageSource;
+      try {
+        this.image = await loadImage(src);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 
   /*

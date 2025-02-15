@@ -18,6 +18,7 @@ class BounceParticle {
   playing: boolean = false;
   requestID: number | null = null; // Variable to hold the requestAnimationFrame ID
   seed: number;
+  soundSource: string;
 
   constructor(config: AnimationConfig) {
     // generating headless with node js
@@ -59,9 +60,33 @@ class BounceParticle {
 
     this.ring = new Ring(ringRadius, this.canvas, this.ctx);
     // prettier-ignore
-    this.p1 = new Particle(centerX, centerY, p1Radius, p1vx, p1vy, gravity, this.ring, config["particle_1_color"]!,this.canvas, this.ctx);
-    // prettier-ignore
-    this.p2 = new Particle(centerX, centerY, p2Radius, p2vx, p2vy, gravity, this.ring, config["particle_2_color"]!,this.canvas, this.ctx);
+
+    this.p1 = new Particle(
+      centerX,
+      centerY,
+      p1Radius,
+      p1vx,
+      p1vy,
+      gravity,
+      this.ring,
+      config["particle_1_color"]!,
+      this.canvas,
+      this.ctx,
+      config["particle_1_image"]!
+    );
+    this.p2 = new Particle(
+      centerX,
+      centerY,
+      p2Radius,
+      p2vx,
+      p2vy,
+      gravity,
+      this.ring,
+      config["particle_2_color"]!,
+      this.canvas,
+      this.ctx,
+      config["particle_2_image"]!
+    );
 
     this.particles = [this.p1, this.p2];
     this.seed = config["seed"] as number;
@@ -70,7 +95,8 @@ class BounceParticle {
     // clearing event emitter
     emitter.clear();
     // initializing the emitter to listen for 'collision'
-    emitter.on("collision", () => this.handleSound(config["collision_sound"] as string));
+    emitter.on("collision", () => this.handleSound());
+    this.soundSource = "";
     this.config = config;
   }
 
@@ -91,11 +117,13 @@ class BounceParticle {
   async load() {
     let startTime = Date.now();
     try {
+      // loading images
       for (let p of this.particles) {
-        let imgURL =
-          "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png";
-        await p.setImage(imgURL);
+        await p.setImage();
       }
+
+      // load sound from backend
+      this.soundSource = "http://localhost:8000/user/get_asset/" + this.config["collision_sound"];
     } catch (error) {
       console.log("error loading images");
     }
@@ -115,15 +143,15 @@ class BounceParticle {
     this.ring.draw();
   }
 
-  handleSound(sound_url: string) {
+  handleSound() {
     // path needs to be relative to the file it is being run in
     if (typeof window === "undefined") {
-      this.audioTimeline.push({ audio: sound_url, frame: this.frame });
+      this.audioTimeline.push({ audio: this.soundSource, frame: this.frame });
     } else {
       // path is relative to the public folder
       // change this so that we load all sounds in initially, then restart them when its time to play
       // use audio.currentTime = 0 to reset, then audio.play()
-      const a = new Audio(sound_url);
+      const a = new Audio(this.soundSource);
       a.play();
     }
   }

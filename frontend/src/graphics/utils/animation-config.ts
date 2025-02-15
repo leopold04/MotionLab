@@ -4,6 +4,8 @@ type AnimationConfig = {
   canvas_width: number;
   canvas_height: number;
   background_color?: string;
+  particle_1_image?: string;
+  particle_2_image?: string;
   particle_1_color?: string;
   particle_2_color?: string;
   particle_size?: number;

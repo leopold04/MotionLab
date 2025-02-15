@@ -51,67 +51,62 @@ user_bp = Blueprint("user_bp", __name__)
 
 
 @user_bp.route("/user/upload_file", methods=["POST"])
-def upload_asset_to_supabase():
+def upload_asset():
     start_time = time.time()
     # receiving file and filename from client
     # look up flask.Request in docs for other info
     file = request.files['file']
     filename = request.form["filename"]
-    userID = request.form["userID"]
+    userID, sessionID = request.form["userID"], request.form["sessionID"]
     bytes = file.read()
     print("Asset received from the frontend")
-    # make the bucket for the user if it does not exist
-    # change get user function
-    create_bucket(userID)
+
+    # directories
+    video_dir = "../videos"
+    user_dir = os.path.join(video_dir, userID)
+    session_dir = os.path.join(user_dir, sessionID)
+    asset_dir = os.path.join(session_dir, "assets")
+    # we will put our file into one of these directories within our asset directory
+    sound_dir = os.path.join(asset_dir, "sounds")
+    image_dir = os.path.join(asset_dir, "images")
+    sequence_dir = os.path.join(asset_dir, "frame_sequences")
+
+    # placing the file depending on what the extension is
     extension = get_file_extension(filename)
 
     match extension:
         case "mp3":
-            bucket_path = "assets/sounds/" + filename
+            file_path = os.path.join(sound_dir, filename)
         case "jpeg":
-            bucket_path = "assets/images/" + filename
+            file_path = os.path.join(image_dir, filename)
         case "png":
-            bucket_path = "assets/images/" + filename
+            file_path = os.path.join(image_dir, filename)
         case "gif":
-            # send to processing to extract the frames
-            bucket_path = "assets/frame_sequences/" + filename.split(".")[0]
-            # extract the frames
-            gif_info = extract_frames(bytes, userID)
+            # extract the frames and put them in our sequence directory
+            output_folder = os.path.join(sequence_dir, filename.split(".")[0])
+            gif_info = extract_frames(bytes, filename, output_folder)
 
     if extension != "gif":
-        # uploading the file
-        upload_file(userID, bytes, bucket_path, content_map[extension])
-        # getting the url of the file we just uploaded
-        file_url = supabase.storage.from_(userID).get_public_url(bucket_path)
-        print(file_url)
-        # returning the URL of the file in a supabase bucket
-        print("Asset successfully uploaded to supabase")
-        return jsonify({"url": file_url}, {"content-type": content_map[extension]})
-    else:
+        # just write the bytes to the appropriate place in the asset directory
         try:
-            for i in range(1, gif_info["frame_count"]):
-                # "123".zfill(5) = "00123"
-                frame = f"{gif_info["output_folder"]
-                           }/frame{str(i).zfill(4)}.png"
-                with open(frame, "rb") as f:
-                    upload_file(userID, f.read(), f"{
-                                bucket_path}/frame{str(i).zfill(4)}.png", content_map[extension])
-        except Exception as e:
-            # if we get an error (such as if all the frames don't get exported properly), we delete the folder
-            print(e)
-            shutil.rmtree(gif_info["output_folder"])
-            # returning the url of the bucket where all of the frames are stored
-        print(f"Successfully uploaded frame sequence to supabase in {
-              time.time() - start_time} seconds")
-        base_url = f"{
-            supabase_url}/storage/v1/object/public/{userID}/{bucket_path}/"
-        # removing the directory from our file system
-        shutil.rmtree(gif_info["output_folder"])
-        return jsonify({"url": base_url, "gif_frame_count": gif_info["frame_count"], "gif_fps": gif_info["fps"], "content-type": content_map[extension]})
-
+            with open(file_path, "wb") as f:
+                f.write(bytes)
+                # we return the file path relative to the ROOT directory, not backend now
+                # ../videos/user/session/assets => videos/user/session/assets
+                file_path = file_path[3:]
+            return jsonify({"src": file_path, "content-type": content_map[extension]}), 200
+        except:
+            return jsonify({"message": "could not upload file"}), 400
+    else:
+        # file writing has already been done, so we just return the gif info
+        # removing the ../ prefix
+        output_folder = output_folder[3:]
+        return jsonify({"src": output_folder, "gif_frame_count": gif_info["frame_count"], "gif_fps": gif_info["fps"], "content-type": content_map[extension]})
 
 # downloads a gif from a url, creates a directory for the frames in the user's video assets dir
 # then dumps all the frames into that directory
+
+
 def download_gif(url: str, user: str):
     pass
 
@@ -124,6 +119,15 @@ def read_defaults():
 @user_bp.route("/user/element_map", methods=["GET"])
 def read_elements():
     return send_from_directory("./", "element-map.json")
+
+
+@user_bp.route("/user/get_asset/<path:file_path>")
+def send_asset(file_path):
+    '''
+    serves asset relative to our root directory
+    '''
+
+    return send_from_directory("../", file_path)
 
 
 @user_bp.route("/user/setup_directories", methods=["POST"])
@@ -163,7 +167,7 @@ def setup_directories():
 
 @user_bp.route("/user/clear_session", methods=["POST", "OPTIONS"])
 def clear_session_directory():
-    # we sent raw bytes from our frontend, so we have to decode it
+    # we received raw bytes from our frontend, so we have to decode it
     data = request.data
     # decoding it into string format
     data_str = data.decode("utf-8")

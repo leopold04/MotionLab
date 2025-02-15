@@ -3,7 +3,9 @@
   "canvas_height": "number",
   "background_color": "color",
   "particle_1_color": "color",
+  "particle_1_image": "image",
   "particle_2_color": "color",
+  "particle_2_image": "image",
   "collision_sound": "audio",
   "sequence": "gif"
 }
