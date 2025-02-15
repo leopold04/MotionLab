@@ -14,6 +14,7 @@ class BounceParticle {
   fps: number = 60;
   duration: number;
   audioTimeline: object[] = [];
+  bounceTimes: number[] = [];
   config: AnimationConfig;
   playing: boolean = false;
   requestID: number | null = null; // Variable to hold the requestAnimationFrame ID
@@ -30,6 +31,8 @@ class BounceParticle {
   imgIdx: number = 0; // index of the image we are loading in
   centerX: number;
   centerY: number;
+  // number of frames we allow to pass without a bounce before we have to restart the audio
+  soundBuffer: number = 60;
   constructor(config: AnimationConfig) {
     // generating headless with node js
     if (typeof window === "undefined") {
@@ -108,6 +111,19 @@ class BounceParticle {
     for (let i = 0; i < this.particles.length; i++) {
       for (let j = i + 1; j < this.particles.length; j++) {
         Particle.handleCollision(this.particles[i], this.particles[j]);
+      }
+    }
+    if (this.frame - this.last >= this.soundBuffer) {
+      this.didx = 0;
+      if (typeof window === "object" && this.last != 0) {
+        this.sound.pause();
+        this.sound.currentTime = 0;
+      }
+    }
+    if (typeof window === "undefined") {
+      // make the timeline once we reach the end of the animation
+      if (this.frame == this.duration - 1) {
+        this.createAudioTimeline();
       }
     }
     this.frame++;
@@ -189,7 +205,7 @@ class BounceParticle {
       let imgY = this.centerY - imgH / 2;
       this.ctx.drawImage(currentImage, imgX, imgY, imgW, imgH);
     } catch (error) {
-      console.log(this.imgIdx);
+      console.log(error, this.imgIdx);
     }
   }
 
@@ -202,46 +218,36 @@ class BounceParticle {
   }
   handleBounce() {
     // 1 means the video is playing, 0 means it is not
-    console.log(this.frame);
-    let buffer = 60; // if bounce does not occur in buffer/60 seconds, pause and restart
     this.resizeParticle();
-    // undefined
-    if (this.frame - this.last > buffer && this.last != 0) {
-      if (typeof window === "undefined") {
-        // cut the sound off and save it
-        let audio_duration = this.frame - this.soundStart;
-        // we want to convert this from frames to milliseconds
-        audio_duration = Math.round((audio_duration / 60) * 1000);
-        // TODO: implement some check so that if the end frame (duration * 60) is coming, we play?
-        // idk its not working for the last bounce, but we made good progress
-        this.audioTimeline.push({ audio: this.songURL, frame: this.soundStart, audio_duration: audio_duration });
-        // if last bounce is buffer from duration then play sound
-      } else {
-        // browser
-        this.sound.pause();
-        this.sound.currentTime = 0;
+    // ex: if gif is 60fps, then didx = 1, so every frame, we advance 1 gif frame
+    // if gif is 20fps, then didx = 20/60=1/3, so every 3 frames, we advance 1 gif frame
+    this.didx = this.sequenceFPS / this.fps;
+    this.last = this.frame;
+    if (typeof window === "object") {
+      this.sound.play();
+    }
+    if (typeof window === "undefined") {
+      this.bounceTimes.push(this.frame);
+    }
+  }
+
+  createAudioTimeline() {
+    let start = this.bounceTimes[0];
+    for (let i = 1; i < this.bounceTimes.length; i++) {
+      if (this.bounceTimes[i] - this.bounceTimes[i - 1] >= this.soundBuffer) {
+        let audioDuration = this.bounceTimes[i - 1] + this.soundBuffer - start;
+        // converting the duration in frames to milliseconds
+        audioDuration = Math.round((audioDuration / 60) * 1000);
+        this.audioTimeline.push({ audio: this.songURL, frame: start, audio_duration: audioDuration });
+        start = this.bounceTimes[i];
       }
-      this.didx = 0; // pause the video
-    } else {
-      // start the audio
-      if (this.frame - this.soundStart > buffer || this.last == 0) {
-        if (typeof window === "undefined") {
-          this.soundStart = this.frame;
-          // if we are close to the end, play the rest of the audio
-          let audio_duration = this.duration - this.frame;
-          audio_duration = Math.round((audio_duration / 60) * 1000);
-          if (this.duration - this.frame < buffer) {
-            this.audioTimeline.push({ audio: this.songURL, frame: this.soundStart, audio_duration: audio_duration });
-          }
-        } else {
-          this.sound.play();
-        }
-        // ex: if gif is 60fps, then didx = 1, so every frame, we advance 1 gif frame
-        // if gif is 20fps, then didx = 20/60=1/3, so every 3 frames, we advance 1 gif frame
-        this.didx = this.sequenceFPS / this.fps;
+      // handling the last potential bounce
+      if (this.duration - this.bounceTimes[i] < this.soundBuffer && i == this.bounceTimes.length - 1) {
+        let audioDuration = this.duration - this.bounceTimes[i];
+        audioDuration = Math.round((audioDuration / 60) * 1000);
+        this.audioTimeline.push({ audio: this.songURL, frame: start, audio_duration: audioDuration });
       }
     }
-    this.last = this.frame;
   }
 
   // The animation function to animate
