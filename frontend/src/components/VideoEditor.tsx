@@ -15,7 +15,7 @@ function VideoEditor({ userID, sessionID }: Props) {
 
   const animationRef = useRef<any>(null);
   const AnimationClassRef = useRef<any>(null);
-  const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [videoProgress, setVideoProgress] = useState<any>({ progress: 0, url: null });
   const [formElements, setFormElements] = useState<[string, any, InputType][]>([]);
   const [animationName, setAnimationName] = useState<string>("particle-ring");
   const [animationNameMap, setAnimationNameMap] = useState<{ [key: string]: string }>({});
@@ -229,28 +229,68 @@ function VideoEditor({ userID, sessionID }: Props) {
       animationInfo: { animationName: animationName, config: configRef.current },
     };
     try {
-      const response = await fetch("http://localhost:3000/video/create_frames", {
+      // send request to express backend to make the frames
+      console.log("Sending frame creation request");
+      await fetch("http://localhost:3000/video/create_frames", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(videoData),
       });
-      const data = await response.json();
-      // url of video we generated, then uploaded to supabase bucket
+      // poll progress and wait for the frames to be created
+      await pollProgress();
 
-      /*
-      video status
-      - progress: number between 0 and 100
+      const info_response = await fetch("http://localhost:3000/video/get_info");
+      // info to send to the flask backend to render the video
+      const info = await info_response.json();
 
+      console.log("Sending video rendering request");
 
-      */
-      console.log(data);
-      const uploadURL = data["url"];
-      // put this URL in our download button
-      setVideoURL(uploadURL);
-      console.log("Video URL:", uploadURL);
+      const res = await fetch("http://localhost:8000/video/render_video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(info),
+      });
+      let data = await res.json();
+      setVideoProgress({ progress: 100, url: data["url"] });
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async function pollProgress() {
+    return new Promise<void>((resolve) => {
+      const pollInterval = 1000; // Poll every 1 second
+      const maxAttempts = 300; // Max attempts (5 minutes)
+      let attempts = 0;
+
+      const poll = async () => {
+        try {
+          const response = await fetch("http://localhost:3000/video/get_progress");
+          const data = await response.json();
+          const currentProgress = data.progress;
+
+          console.log(`Current Progress: ${currentProgress}%`);
+          // setting the progress of the video's generation
+          setVideoProgress({ progress: currentProgress, url: null });
+          if (currentProgress >= 100 || attempts >= maxAttempts) {
+            clearInterval(intervalId);
+            if (currentProgress >= 100) {
+              console.log("Video generation complete!");
+            } else {
+              console.log("Polling timed out.");
+            }
+            resolve(); // Resolve the promise when polling finishes
+          }
+        } catch (error) {
+          console.error("Error polling progress:", error);
+          clearInterval(intervalId);
+          resolve(); // Resolve even if there's an error
+        }
+        attempts++;
+      };
+
+      const intervalId = setInterval(poll, pollInterval);
+    });
   }
 
   async function updateConfig(setting: string, value: any) {
@@ -343,7 +383,9 @@ function VideoEditor({ userID, sessionID }: Props) {
       const secondsPart = (seconds % 60).toFixed(1); // Get the seconds with one decimal
       return `${minutes}:${secondsPart.padStart(4, "0")}`; // Format to "m:ss.s"
     };
-
+    if (isNaN(time) || isNaN(duration)) {
+      return format(0) + " / " + format(0);
+    }
     return format(time) + " / " + format(duration);
   }
 
@@ -366,7 +408,7 @@ function VideoEditor({ userID, sessionID }: Props) {
         exportVideo,
         formatTime,
         isRunning,
-        videoURL,
+        videoProgress,
       }}
     >
       <div className="container">

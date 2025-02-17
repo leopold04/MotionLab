@@ -155,8 +155,8 @@ def upload_video(file, user, session):
 video_bp = Blueprint("video_bp", __name__)
 
 
-@video_bp.route("/video/create_video", methods=["POST"])
-def create_video():
+@video_bp.route("/video/render_video", methods=["POST"])
+def render_video():
     # receiving json containing: user, session, sessionDir, duration, audioTimeline
     data = request.get_json()
     print("Request received from express server")

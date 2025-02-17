@@ -178,8 +178,8 @@ def clear_session_directory():
     user_dir = os.path.join(video_dir, userID)
     session_dir = os.path.join(user_dir, sessionID)
     try:
-        shutil.rmtree(session_dir)
+        if (os.path.isdir(session_dir)):
+            shutil.rmtree(session_dir)
         return jsonify({"message": f"successfully removed {session_dir}"}), 200
     except Exception as e:
-        print(e)
-        return jsonify({"message": f"could not remove {session_dir}"}), 400
+        return jsonify({"message": "An error occurred"}), 400

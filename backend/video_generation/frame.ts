@@ -17,7 +17,7 @@ let frameWriteTime = 0;
 let assetLoadTime = 0;
 let config: AnimationConfig;
 const fps = 60; // Frames per second for both the generated frames and the final video
-
+let progress = 0;
 async function run(animationName: string) {
   try {
     // Dynamically import the correct animation file
@@ -41,7 +41,6 @@ async function writeFrames(animation: any) {
   let startTime = Date.now();
   console.log("Starting frame generation");
   const totalFrames = fps * duration; // Total number of frames, calculated as fps * duration (30 FPS * 10 seconds = 300 frames)
-  // Loop through each frame and create it using the `createFrame` method of the Animation class
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     // creating frame
     await animation.update();
@@ -49,12 +48,16 @@ async function writeFrames(animation: any) {
     // making frame path for image
     const framePath = path.join(frameDir, `frame${String(frameIndex).padStart(4, "0")}.png`);
     const buffer = animation.canvas.toBuffer("image/png");
-    fs.writeFileSync(framePath, buffer);
-    if (frameIndex % 100 == 0) {
+    progress = Math.round((frameIndex / totalFrames) * 100);
+    // writing the file asynchronously so our event loop does not get blocked
+    await fs.promises.writeFile(framePath, buffer);
+    if ((frameIndex + 1) % 10 == 0) {
       console.log(`Rendered ${frameIndex + 1}/${totalFrames} frames`);
     }
+    await new Promise((resolve) => setImmediate(resolve));
   }
   audioTimeline = animation.audioTimeline;
+  progress = 100; // setting progress to 100 once we finish
   let timeElapsed = (Date.now() - startTime) / 1000;
   return timeElapsed;
 }
@@ -63,16 +66,12 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
 
-app.post("/video/create_frames", async (request, response) => {
-  console.log("Request:");
-  console.log(request.body);
-  console.log("");
-  ({ userID, sessionID } = request.body.userInfo);
-  sessionDir = `../videos/${userID}/${sessionID.toString()}`;
-  frameDir = path.join(sessionDir, "frames");
-  ({ duration } = request.body.videoInfo);
-  ({ animationName, config } = request.body.animationInfo);
-  await run(animationName);
+app.get("/video/get_progress", (req, res) => {
+  // returns progress of video
+  res.json({ progress: progress });
+});
+
+app.get("/video/get_info", (req, res) => {
   let info: any = {
     user: userID,
     template: animationName,
@@ -85,22 +84,21 @@ app.post("/video/create_frames", async (request, response) => {
     frameWriteTime: frameWriteTime,
   };
   console.log(info);
+  res.json(info);
+});
 
-  // sending request to flask endpoint to start video generation process
-  console.log("Sending video creation request");
-  let data;
-  try {
-    const res = await fetch("http://localhost:8000/video/create_video", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(info),
-    });
-    data = await res.json();
-  } catch (error) {
-    console.log(error);
-  }
-
-  response.json(data);
+app.post("/video/create_frames", async (request, response) => {
+  console.log("Request:");
+  console.log(request.body);
+  console.log("");
+  ({ userID, sessionID } = request.body.userInfo);
+  sessionDir = `../videos/${userID}/${sessionID.toString()}`;
+  frameDir = path.join(sessionDir, "frames");
+  ({ duration } = request.body.videoInfo);
+  ({ animationName, config } = request.body.animationInfo);
+  response.json({ message: "Starting frame creation" });
+  // allow the run function to run asynchronously
+  run(animationName);
 });
 
 app.listen(3000, () => {

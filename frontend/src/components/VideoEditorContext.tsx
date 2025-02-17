@@ -1,5 +1,10 @@
 import React, { createContext } from "react";
 type InputType = "color" | "audio" | "image" | "gif";
+// stores both the numerical progress and the url of the video once it is completed
+interface VideoProgression {
+  progress: number;
+  url: string | null;
+}
 
 interface ContextType {
   handleColorChange: (color: any, setting: string) => void;
@@ -17,7 +22,7 @@ interface ContextType {
   exportVideo: () => void;
   formatTime: () => string;
   isRunning: boolean;
-  videoURL: string | null;
+  videoProgress: VideoProgression;
 }
 
 const VideoEditorContext = createContext<ContextType | undefined>(undefined);

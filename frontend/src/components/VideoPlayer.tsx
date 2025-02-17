@@ -9,7 +9,34 @@ function VideoPlayer() {
     throw new Error("Context is not defined");
   }
 
-  const { formatTime, play, pause, resetAnimation, randomizeAnimation, exportVideo, isRunning, videoURL } = context;
+  const { formatTime, play, pause, resetAnimation, randomizeAnimation, exportVideo, isRunning, videoProgress } =
+    context;
+
+  // contains export/download button and the progress of the video
+  function exportComponent() {
+    let progress = videoProgress["progress"];
+    let videoURL = videoProgress["url"];
+    // show progress bar if video is being made
+    if (progress > 0) {
+      // if the video is done generating and a url has been made for it
+      if (videoURL) {
+        return (
+          <button id="download-button" onClick={() => downloadVideo(videoURL)}>
+            Download <FontAwesomeIcon icon={faDownload} />
+          </button>
+        );
+      } else {
+        return <h3>{progress}</h3>;
+      }
+    } else {
+      // just show export button, since the video has not been made yet
+      return (
+        <button id="export-button" onClick={exportVideo}>
+          Export <FontAwesomeIcon icon={faDownload} />
+        </button>
+      );
+    }
+  }
 
   function downloadVideo(url: string) {
     // Create a new URL object
@@ -59,17 +86,7 @@ function VideoPlayer() {
           Shuffle <FontAwesomeIcon icon={faShuffle} />
         </button>
       </div>
-
-      {/** Conditional rendering for download / export button depending on if the video is done generating */}
-      {videoURL ? (
-        <button id="download-button" onClick={() => downloadVideo(videoURL)}>
-          Download <FontAwesomeIcon icon={faDownload} />
-        </button>
-      ) : (
-        <button id="export-button" onClick={exportVideo}>
-          Export <FontAwesomeIcon icon={faDownload} />
-        </button>
-      )}
+      {exportComponent()};
     </div>
   );
 }
