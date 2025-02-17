@@ -123,7 +123,7 @@ class BounceParticle {
       }
 
       // load sound from backend
-      this.soundSource = "http://localhost:8000/user/get_asset/" + this.config["collision_sound"];
+      this.soundSource = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
     } catch (error) {
       console.log("error loading images");
     }

@@ -48,7 +48,7 @@ class BounceParticle {
     this.duration = config["duration"] * this.fps;
     this.seed = config["seed"] as number;
     // change this
-    this.songURL = ("http://localhost:8000/user/get_asset/" + config["collision_sound"]) as string;
+    this.songURL = ("http://localhost:8000/file/get_asset/" + config["collision_sound"]) as string;
     this.sequenceURL = config["sequence"] as string;
     this.sequenceFPS = config["sequence_fps"] as number;
     this.sequenceFrameCount = config["sequence_frame_count"] as number;
@@ -139,7 +139,7 @@ class BounceParticle {
     // sequenceURL = "supabase_url.com/bucket_path/"
     for (let i = 1; i < this.sequenceFrameCount; i++) {
       let framePath = this.sequenceURL + `/frame${i.toString().padStart(4, "0")}.png`;
-      let frameURL = "http://localhost:8000/user/get_asset/" + framePath;
+      let frameURL = "http://localhost:8000/file/get_asset/" + framePath;
       // adding a promise to the queue and adding an image to the image array at index i - 1 (since i starts at 1)
       let imagePromise = this.loadImageAsync(frameURL, i - 1);
       imagePromises.push(imagePromise);
@@ -148,8 +148,8 @@ class BounceParticle {
     // wait for all images to be loaded concurrently
     await Promise.all(imagePromises);
 
-    if (typeof window === "undefined") {
-    } else {
+    // use web audio api if we are in the browser
+    if (typeof window === "object") {
       this.sound = new Audio(this.songURL);
     }
 
@@ -198,7 +198,7 @@ class BounceParticle {
     let index = Math.round(this.imgIdx) % (this.sequenceFrameCount - 1);
     // always end up having an image drawn
     let currentImage = this.images[index];
-    let imgW = 0.4 * this.canvas.width;
+    let imgW = 0.3 * this.canvas.width;
     try {
       let imgH = imgW * (currentImage.height / currentImage.width); // keep aspect ratio
       let imgX = this.centerX - imgW / 2;

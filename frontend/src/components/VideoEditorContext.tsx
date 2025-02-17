@@ -17,6 +17,7 @@ interface ContextType {
   exportVideo: () => void;
   formatTime: () => string;
   isRunning: boolean;
+  videoURL: string | null;
 }
 
 const VideoEditorContext = createContext<ContextType | undefined>(undefined);

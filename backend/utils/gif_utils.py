@@ -17,6 +17,10 @@ def create_directory(path):
             print(e)
 
 
+def download_gif(url: str, user: str):
+    pass
+
+
 def get_fps(bytes) -> int:
     path = "file"
     with open(path, "wb") as f:
@@ -61,7 +65,6 @@ def compress_images(output_folder):
 
 # returns frame path, frame count, and fps
 def extract_frames(bytes, filename, output_folder):
-
     with open(filename, "wb") as f:
         f.write(bytes)
     os.makedirs(output_folder, exist_ok=True)

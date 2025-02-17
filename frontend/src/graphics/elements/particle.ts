@@ -117,7 +117,7 @@ class Particle {
     // if we have an image source passed in, we set that to the particle's image
     if (this.imageSource != "") {
       // getting image from our backend
-      let src = "http://localhost:8000/user/get_asset/" + this.imageSource;
+      let src = "http://localhost:8000/file/get_asset/" + this.imageSource;
       try {
         this.image = await loadImage(src);
       } catch (error) {

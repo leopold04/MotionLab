@@ -7,10 +7,10 @@
     "canvas_height": 1280,
     "background_color": "#ebedf0",
     "particle_1_color": "#88b0db",
-    "particle_1_image": "frontend/public/images/arsenal.png",
+    "particle_1_image": "assets/images/arsenal.png",
     "particle_2_color": "#729c8c",
     "particle_2_image": "",
-    "collision_sound": "frontend/public/sound_effects/button2.mp3"
+    "collision_sound": "assets/sound_effects/button2.mp3"
   },
   "multisound": {
     "name": "1 song multiple sounds",
@@ -20,10 +20,24 @@
     "canvas_height": 1280,
     "background_color": "#dadce3",
     "particle_1_color": "#88b0db",
-    "collision_sound": "frontend/public/songs/rat.mp3",
-    "sequence": "frontend/public/frame_sequences/mario",
+    "collision_sound": "assets/songs/rat.mp3",
+    "sequence": "assets/frame_sequences/mario",
     "sequence_frame_count": 16,
     "sequence_fps": 3
+  },
+  "midibounce": {
+    "name": "midi bounce",
+    "duration": 10,
+    "seed": 2,
+    "canvas_width": 720,
+    "canvas_height": 1280,
+    "background_color": "#ffffff",
+    "particle_1_color": "#88b0db",
+    "particle_1_image": "",
+    "particle_2_color": "#729c8c",
+    "particle_2_image": "",
+    "collision_sound": "assets/sound_effects/button2.mp3",
+    "midi_song": "assets/midi/mii-track"
   },
   "particle-arc": {
     "name": "PARC",

@@ -10,12 +10,12 @@ interface Props {
 }
 
 function VideoEditor({ userID, sessionID }: Props) {
-  // this lets us only include certain default configs to render (not seed)
   type InputType = "color" | "audio" | "image" | "gif";
   let InputTypes: InputType[] = ["color", "audio", "image", "gif"];
 
   const animationRef = useRef<any>(null);
   const AnimationClassRef = useRef<any>(null);
+  const [videoURL, setVideoURL] = useState<string | null>(null);
   const [formElements, setFormElements] = useState<[string, any, InputType][]>([]);
   const [animationName, setAnimationName] = useState<string>("particle-ring");
   const [animationNameMap, setAnimationNameMap] = useState<{ [key: string]: string }>({});
@@ -37,7 +37,7 @@ function VideoEditor({ userID, sessionID }: Props) {
     let userInfo = { userID: userID, sessionID: sessionID };
     try {
       // sends request to backend to make directories for the user's video
-      await fetch("http://localhost:8000/user/setup_directories", {
+      await fetch("http://localhost:8000/file/setup_directories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userInfo),
@@ -99,7 +99,7 @@ function VideoEditor({ userID, sessionID }: Props) {
    * @param {string} animation - The name of the animation to get configs for.
    */
   async function getDefaultConfigs(animation: string) {
-    const response = await fetch("http://localhost:8000/user/default_configs");
+    const response = await fetch("http://localhost:8000/file/default_configs");
     const data = await response.json();
     configRef.current = data[animation];
     let elementList = await createElementList(configRef.current);
@@ -128,7 +128,7 @@ function VideoEditor({ userID, sessionID }: Props) {
    *          with their values and input types.
    */
   async function createElementList(configuration: AnimationConfig): Promise<[string, any, InputType][]> {
-    const response = await fetch("http://localhost:8000/user/element_map");
+    const response = await fetch("http://localhost:8000/file/element_map");
     const elementMap = await response.json();
     let configObject: object = configuration;
     let configList = Object.entries(configObject);
@@ -236,9 +236,18 @@ function VideoEditor({ userID, sessionID }: Props) {
       });
       const data = await response.json();
       // url of video we generated, then uploaded to supabase bucket
+
+      /*
+      video status
+      - progress: number between 0 and 100
+
+
+      */
       console.log(data);
-      const videoURL = data["url"];
-      console.log("Video URL:", videoURL);
+      const uploadURL = data["url"];
+      // put this URL in our download button
+      setVideoURL(uploadURL);
+      console.log("Video URL:", uploadURL);
     } catch (error) {
       console.log(error);
     }
@@ -292,7 +301,7 @@ function VideoEditor({ userID, sessionID }: Props) {
 
       // send the bytes of our file to the backend
       try {
-        const response = await fetch("http://localhost:8000/user/upload_file", {
+        const response = await fetch("http://localhost:8000/file/upload_file", {
           method: "POST",
           body: formData,
         });
@@ -357,6 +366,7 @@ function VideoEditor({ userID, sessionID }: Props) {
         exportVideo,
         formatTime,
         isRunning,
+        videoURL,
       }}
     >
       <div className="container">

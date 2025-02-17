@@ -27,7 +27,7 @@ function Dashboard() {
     try {
       // Use sendBeacon to ensure the request is sent before the page unloads
       // the data we send with sendBeacon is turned into bytes, so we decode it into string then json on our backend
-      const success = navigator.sendBeacon("http://localhost:8000/user/clear_session", JSON.stringify(userInfo));
+      const success = navigator.sendBeacon("http://localhost:8000/file/clear_session", JSON.stringify(userInfo));
 
       if (success) {
         console.log("Session cleared successfully");

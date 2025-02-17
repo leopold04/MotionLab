@@ -9,8 +9,33 @@ function VideoPlayer() {
     throw new Error("Context is not defined");
   }
 
-  const { formatTime, play, pause, resetAnimation, randomizeAnimation, exportVideo, isRunning } = context;
+  const { formatTime, play, pause, resetAnimation, randomizeAnimation, exportVideo, isRunning, videoURL } = context;
 
+  function downloadVideo(url: string) {
+    // Create a new URL object
+    let downloadUrl = new URL(url);
+
+    // Append the query parameter to the URL (if needed)
+    downloadUrl.searchParams.append("download", "video.mp4");
+
+    // Create a new anchor element
+    let a = document.createElement("a");
+
+    // Set the href of the anchor element to the download URL
+    a.href = downloadUrl.toString();
+
+    // Set the download attribute of the anchor element to the filename
+    a.download = "video.mp4";
+
+    // Append the anchor element to the body
+    document.body.appendChild(a);
+
+    // Simulate a click on the anchor element
+    a.click();
+
+    // Remove the anchor element from the body
+    document.body.removeChild(a);
+  }
   return (
     <div className="video-player">
       <canvas id="canvas"></canvas>
@@ -35,9 +60,16 @@ function VideoPlayer() {
         </button>
       </div>
 
-      <button id="export-button" onClick={exportVideo}>
-        Export <FontAwesomeIcon icon={faDownload} />
-      </button>
+      {/** Conditional rendering for download / export button depending on if the video is done generating */}
+      {videoURL ? (
+        <button id="download-button" onClick={() => downloadVideo(videoURL)}>
+          Download <FontAwesomeIcon icon={faDownload} />
+        </button>
+      ) : (
+        <button id="export-button" onClick={exportVideo}>
+          Export <FontAwesomeIcon icon={faDownload} />
+        </button>
+      )}
     </div>
   );
 }

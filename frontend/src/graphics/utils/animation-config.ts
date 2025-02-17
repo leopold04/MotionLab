@@ -13,10 +13,11 @@ type AnimationConfig = {
   seed?: number;
   name?: string;
   duration: number;
-  sound: string;
-  sequence: string;
-  sequence_fps: number;
-  sequence_frame_count: number;
+  sound?: string;
+  sequence?: string;
+  sequence_fps?: number;
+  sequence_frame_count?: number;
+  midi_song?: string;
 };
 
 export default AnimationConfig;
