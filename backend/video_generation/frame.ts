@@ -48,7 +48,7 @@ async function writeFrames(animation: any) {
     // making frame path for image
     const framePath = path.join(frameDir, `frame${String(frameIndex).padStart(4, "0")}.png`);
     const buffer = animation.canvas.toBuffer("image/png");
-    progress = Math.round((frameIndex / totalFrames) * 75);
+    progress = (frameIndex / totalFrames) * 74; // setting to max of 74 instead of 75 helps reduce rounding errors
     // writing the file asynchronously so our event loop does not get blocked
     await fs.promises.writeFile(framePath, buffer);
     if ((frameIndex + 1) % 10 == 0) {

@@ -21,6 +21,13 @@ function VideoPlayer() {
     setVideoProgress,
   } = context;
 
+  let bar = (
+    <div className="progress-bar">
+      <div className="progress__fill" style={{ width: `${videoProgress["progress"]}%` }}></div>
+      <span className="progress__text">{Math.round(videoProgress["progress"])}%</span>
+    </div>
+  );
+
   // contains export/download button and the progress of the video
   function exportComponent() {
     let progress = videoProgress["progress"];
@@ -35,7 +42,7 @@ function VideoPlayer() {
           </button>
         );
       } else {
-        return <h3>{progress}</h3>;
+        return bar;
       }
     } else {
       // just show export button, since the video has not been made yet

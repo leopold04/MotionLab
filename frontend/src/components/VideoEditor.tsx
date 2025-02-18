@@ -263,10 +263,7 @@ function VideoEditor({ userID, sessionID }: Props) {
 
   async function pollProgress(endpoint: string) {
     return new Promise<void>((resolve) => {
-      const pollInterval = 1000; // Poll every 1 second
-      const maxAttempts = 300; // Max attempts (5 minutes)
-      let attempts = 0;
-
+      const pollInterval = 500; // Poll every 0.5 seconds
       const poll = async () => {
         try {
           let response;
@@ -288,34 +285,21 @@ function VideoEditor({ userID, sessionID }: Props) {
           // setting the progress of the video's generation
           setVideoProgress({ progress: currentProgress, url: null });
 
-          if (endpoint == "create_frames") {
-            if (currentProgress >= 75 || attempts >= maxAttempts) {
-              clearInterval(intervalId);
-              if (currentProgress >= 75) {
-                console.log("Frame creation complete");
-              } else {
-                console.log("Polling timed out.");
-              }
-              resolve(); // Resolve the promise when polling finishes
-            }
+          if (endpoint == "create_frames" && currentProgress == 75) {
+            clearInterval(intervalId);
+            console.log("Frame creation complete");
+            resolve(); // Resolve the promise when polling finishes
           }
-          if (endpoint == "render_video") {
-            if (currentProgress >= 100 || attempts >= maxAttempts) {
-              clearInterval(intervalId);
-              if (currentProgress >= 100) {
-                console.log("Video rendering complete!");
-              } else {
-                console.log("Polling timed out.");
-              }
-              resolve(); // Resolve the promise when polling finishes
-            }
+          if (endpoint == "render_video" && currentProgress == 100) {
+            clearInterval(intervalId);
+            console.log("Video rendering complete!");
+            resolve(); // Resolve the promise when polling finishes
           }
         } catch (error) {
           console.error("Error polling progress:", error);
           clearInterval(intervalId);
           resolve(); // Resolve even if there's an error
         }
-        attempts++;
       };
 
       const intervalId = setInterval(poll, pollInterval);

@@ -114,7 +114,9 @@ class BounceParticle {
         this.noteAudios.push(new Audio(notePath));
       }
     }
-    console.log(this.notePaths);
+    if (typeof window === "object") {
+      console.log(this.notePaths);
+    }
     let loadTime = (Date.now() - startTime) / 1000;
     return loadTime;
   }

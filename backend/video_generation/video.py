@@ -191,15 +191,15 @@ def render_video(data):
     # generating audio (saved to sessionDir/output.mp3)
     audio_creation_time = generate_audio(
         data["audioTimeline"], data["duration"], data["sessionDir"])
-    progress += 10
+    progress = 85
 
     # generating muted video (saved to sessionDir/output.mp4)
     frame_combination_time = combine_frames(data["sessionDir"])
-    progress += 5
+    progress = 90
 
     # combining the muted video and audio (saved to sessionDir/final.mp4)
     video_path, audio_integration_time = generate_video(data["sessionDir"])
-    progress += 5
+    progress = 95
 
     # cleaning up resources (deleting audio and frame directories, as well as intermediate output files)
     clean_up(data["sessionDir"])
@@ -211,7 +211,6 @@ def render_video(data):
     total_time = data["assetLoadTime"] + data["frameWriteTime"] + \
         frame_combination_time + audio_creation_time + \
         audio_integration_time + upload_time
-    progress = 100
     timezone = pytz.timezone("US/Eastern")
     now = datetime.datetime.now(pytz.utc)
     localized_time = now.astimezone(timezone)
@@ -237,6 +236,9 @@ def render_video(data):
     }
     # updating the videos table in our database
     supabase.table("Videos").insert(video_info).execute()
+    progress = 99  # sleeping so that the progress bar at least shows 99
+    time.sleep(1)
+    progress = 100  # letting the frontend know that we are done rendering the video
 
 
 @video_bp.route("/video/render_video", methods=["POST"])
