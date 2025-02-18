@@ -28,28 +28,23 @@ function VideoPlayer() {
     </div>
   );
 
-  // contains export/download button and the progress of the video
-  function exportComponent() {
-    let progress = videoProgress["progress"];
+  // contains progress bar
+  function progressBar() {
     let videoURL = videoProgress["url"];
     // show progress bar if video is being made
-    if (progress > 0) {
-      // if the video is done generating and a url has been made for it
-      if (videoURL) {
-        return (
-          <button id="download-button" onClick={() => downloadVideo(videoURL)}>
-            Download <FontAwesomeIcon icon={faDownload} />
-          </button>
-        );
-      } else {
-        return bar;
-      }
-    } else {
-      // just show export button, since the video has not been made yet
+    // if the video is done generating and a url has been made for it
+    if (videoURL) {
       return (
-        <button id="export-button" onClick={exportVideo}>
-          Export <FontAwesomeIcon icon={faDownload} />
+        <button id="download-button" onClick={() => downloadVideo(videoURL)}>
+          Download <FontAwesomeIcon icon={faDownload} />
         </button>
+      );
+    } else {
+      return (
+        <>
+          <h3>Generating video</h3>
+          {bar}
+        </>
       );
     }
   }
@@ -85,27 +80,35 @@ function VideoPlayer() {
   return (
     <div className="video-player">
       <canvas id="canvas"></canvas>
-      <h3 className="time">{formatTime()}</h3>
-      <div id="control-row">
-        <button onClick={resetAnimation}>
-          Reset <FontAwesomeIcon icon={faRotate} />
-        </button>
-        {/** Conditional renderring for play/pause button depending on if animation is playing or not */}
-        {isRunning ? (
-          <button onClick={pause}>
-            Pause <FontAwesomeIcon icon={faPause} />
-          </button>
-        ) : (
-          <button onClick={play}>
-            Play <FontAwesomeIcon icon={faPlay} />
-          </button>
-        )}
+      {videoProgress["progress"] == 0 ? (
+        <>
+          <h3 className="time">{formatTime()}</h3>
+          <div id="control-row">
+            <button onClick={resetAnimation}>
+              Reset <FontAwesomeIcon icon={faRotate} />
+            </button>
+            {/** Conditional renderring for play/pause button depending on if animation is playing or not */}
+            {isRunning ? (
+              <button onClick={pause}>
+                Pause <FontAwesomeIcon icon={faPause} />
+              </button>
+            ) : (
+              <button onClick={play}>
+                Play <FontAwesomeIcon icon={faPlay} />
+              </button>
+            )}
 
-        <button onClick={randomizeAnimation}>
-          Shuffle <FontAwesomeIcon icon={faShuffle} />
-        </button>
-      </div>
-      {exportComponent()}
+            <button onClick={randomizeAnimation}>
+              Shuffle <FontAwesomeIcon icon={faShuffle} />
+            </button>
+          </div>
+          <button id="export-button" onClick={exportVideo}>
+            Export <FontAwesomeIcon icon={faDownload} />
+          </button>
+        </>
+      ) : (
+        progressBar()
+      )}
     </div>
   );
 }

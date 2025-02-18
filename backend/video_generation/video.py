@@ -16,9 +16,14 @@ import threading
 progress = 75
 video_info = {}  # will change once the video is done generating
 
+# video blueprint
+video_bp = Blueprint("video_bp", __name__)
+
 
 def download_audio_file(url: str, path: str):
-    # currently only accepting .mp3 files for audio
+    '''
+    Downloads mp3 file
+    '''
     query_params = {"downloadformat": "mp3"}
     response = requests.get(url, params=query_params)
     if response.status_code == 200:
@@ -156,21 +161,11 @@ def upload_video(file, user, session):
     return video_url, upload_time
 
 
-# creation of video blueprint
-video_bp = Blueprint("video_bp", __name__)
-
-'''
-progress timeline
-0 - 75 frame write
-75 - 85 audio creation
-85 - 90 frame combination 
-90 - 95 gen vid
-95 - 100 upload
-'''
-
-
 @video_bp.route("/video/render_progress", methods=["GET"])
 def get_progress():
+    '''
+    Returns the progress of the video 
+    '''
     global progress
     return jsonify({"progress": progress})
 
@@ -185,20 +180,32 @@ def get_info():
 
 
 def render_video(data):
+    '''
+    progress timeline
+    0 - 75 frame write (happens on express server)
+    75 - 85 audio creation
+    85 - 90 frame combination 
+    90 - 95 gen vid
+    95 - 100 upload
+    '''
     global progress
     global video_info
 
     # generating audio (saved to sessionDir/output.mp3)
     audio_creation_time = generate_audio(
         data["audioTimeline"], data["duration"], data["sessionDir"])
+    time.sleep(0.5)
     progress = 85
 
     # generating muted video (saved to sessionDir/output.mp4)
     frame_combination_time = combine_frames(data["sessionDir"])
+    time.sleep(0.5)
+
     progress = 90
 
     # combining the muted video and audio (saved to sessionDir/final.mp4)
     video_path, audio_integration_time = generate_video(data["sessionDir"])
+    time.sleep(0.5)
     progress = 95
 
     # cleaning up resources (deleting audio and frame directories, as well as intermediate output files)
@@ -236,8 +243,10 @@ def render_video(data):
     }
     # updating the videos table in our database
     supabase.table("Videos").insert(video_info).execute()
-    progress = 99  # sleeping so that the progress bar at least shows 99
-    time.sleep(1)
+    # this lets the progress bar "show" 100 because we round the value for display
+    progress = 99.9
+    # but this gives us a chance for it to display since we poll every 0.5 seconds
+    time.sleep(1.5)
     progress = 100  # letting the frontend know that we are done rendering the video
 
 
@@ -246,9 +255,9 @@ def render():
     # receiving json containing: user, session, sessionDir, duration, audioTimeline
     data = request.get_json()
 
-    # doing the video rendering in the background so we can make polling requests
+    # rendering the video on a separate thread so we can continue to poll for progress on the main thread
     render_thread = threading.Thread(
         target=render_video, args=(data,), daemon=True).start()
 
-    # returning the video info
+    # Notifying the client that the video will start rendering
     return jsonify({"message": "Starting video rendering"}), 200

@@ -253,6 +253,7 @@ function VideoEditor({ userID, sessionID }: Props) {
       await pollProgress("render_video"); // we wait until the video is done rendering
 
       let res = await fetch("http://localhost:8000/video/get_info");
+      // information of the finished video (including upload URL)
       let data = await res.json();
 
       setVideoProgress({ progress: 100, url: data["url"] });
@@ -281,7 +282,6 @@ function VideoEditor({ userID, sessionID }: Props) {
           const data = await response.json();
           const currentProgress = data.progress;
 
-          console.log(`Current Progress: ${currentProgress}%`);
           // setting the progress of the video's generation
           setVideoProgress({ progress: currentProgress, url: null });
 

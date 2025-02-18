@@ -37,7 +37,7 @@
     "particle_2_color": "#729c8c",
     "particle_2_image": "",
     "collision_sound": "assets/sound_effects/button2.mp3",
-    "midi_song": "assets/midi/mii-track"
+    "midi_song": "assets/midi/gfalls"
   },
   "particle-arc": {
     "name": "PARC",
