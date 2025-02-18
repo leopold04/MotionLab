@@ -23,6 +23,7 @@ interface ContextType {
   formatTime: () => string;
   isRunning: boolean;
   videoProgress: VideoProgression;
+  setVideoProgress: React.Dispatch<any>;
 }
 
 const VideoEditorContext = createContext<ContextType | undefined>(undefined);

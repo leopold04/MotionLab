@@ -40,7 +40,7 @@ async function run(animationName: string) {
 async function writeFrames(animation: any) {
   let startTime = Date.now();
   console.log("Starting frame generation");
-  const totalFrames = fps * duration; // Total number of frames, calculated as fps * duration (30 FPS * 10 seconds = 300 frames)
+  const totalFrames = fps * duration; // Total number of frames, calculated as fps * duration (60 FPS * 10 seconds = 600 frames)
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     // creating frame
     await animation.update();
@@ -48,7 +48,7 @@ async function writeFrames(animation: any) {
     // making frame path for image
     const framePath = path.join(frameDir, `frame${String(frameIndex).padStart(4, "0")}.png`);
     const buffer = animation.canvas.toBuffer("image/png");
-    progress = Math.round((frameIndex / totalFrames) * 100);
+    progress = Math.round((frameIndex / totalFrames) * 75);
     // writing the file asynchronously so our event loop does not get blocked
     await fs.promises.writeFile(framePath, buffer);
     if ((frameIndex + 1) % 10 == 0) {
@@ -57,7 +57,7 @@ async function writeFrames(animation: any) {
     await new Promise((resolve) => setImmediate(resolve));
   }
   audioTimeline = animation.audioTimeline;
-  progress = 100; // setting progress to 100 once we finish
+  progress = 75; // setting progress to 75 once we finish
   let timeElapsed = (Date.now() - startTime) / 1000;
   return timeElapsed;
 }
@@ -66,7 +66,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
 
-app.get("/video/get_progress", (req, res) => {
+app.get("/video/frame_progress", (req, res) => {
   // returns progress of video
   res.json({ progress: progress });
 });

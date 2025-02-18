@@ -9,8 +9,17 @@ function VideoPlayer() {
     throw new Error("Context is not defined");
   }
 
-  const { formatTime, play, pause, resetAnimation, randomizeAnimation, exportVideo, isRunning, videoProgress } =
-    context;
+  const {
+    formatTime,
+    play,
+    pause,
+    resetAnimation,
+    randomizeAnimation,
+    exportVideo,
+    isRunning,
+    videoProgress,
+    setVideoProgress,
+  } = context;
 
   // contains export/download button and the progress of the video
   function exportComponent() {
@@ -62,6 +71,9 @@ function VideoPlayer() {
 
     // Remove the anchor element from the body
     document.body.removeChild(a);
+
+    // now we set the progress back to 0 to let a new video be made by the user
+    setVideoProgress({ progress: 0, url: null });
   }
   return (
     <div className="video-player">
@@ -86,7 +98,7 @@ function VideoPlayer() {
           Shuffle <FontAwesomeIcon icon={faShuffle} />
         </button>
       </div>
-      {exportComponent()};
+      {exportComponent()}
     </div>
   );
 }

@@ -237,7 +237,7 @@ function VideoEditor({ userID, sessionID }: Props) {
         body: JSON.stringify(videoData),
       });
       // poll progress and wait for the frames to be created
-      await pollProgress();
+      await pollProgress("create_frames");
 
       const info_response = await fetch("http://localhost:3000/video/get_info");
       // info to send to the flask backend to render the video
@@ -245,19 +245,23 @@ function VideoEditor({ userID, sessionID }: Props) {
 
       console.log("Sending video rendering request");
 
-      const res = await fetch("http://localhost:8000/video/render_video", {
+      await fetch("http://localhost:8000/video/render_video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(info),
       });
+      await pollProgress("render_video"); // we wait until the video is done rendering
+
+      let res = await fetch("http://localhost:8000/video/get_info");
       let data = await res.json();
+
       setVideoProgress({ progress: 100, url: data["url"] });
     } catch (error) {
       console.log(error);
     }
   }
 
-  async function pollProgress() {
+  async function pollProgress(endpoint: string) {
     return new Promise<void>((resolve) => {
       const pollInterval = 1000; // Poll every 1 second
       const maxAttempts = 300; // Max attempts (5 minutes)
@@ -265,21 +269,46 @@ function VideoEditor({ userID, sessionID }: Props) {
 
       const poll = async () => {
         try {
-          const response = await fetch("http://localhost:3000/video/get_progress");
+          let response;
+          switch (endpoint) {
+            case "create_frames":
+              response = await fetch("http://localhost:3000/video/frame_progress");
+              break;
+            case "render_video":
+              response = await fetch("http://localhost:8000/video/render_progress");
+              break;
+            default:
+              // we should never reach this case
+              response = new Response();
+          }
           const data = await response.json();
           const currentProgress = data.progress;
 
           console.log(`Current Progress: ${currentProgress}%`);
           // setting the progress of the video's generation
           setVideoProgress({ progress: currentProgress, url: null });
-          if (currentProgress >= 100 || attempts >= maxAttempts) {
-            clearInterval(intervalId);
-            if (currentProgress >= 100) {
-              console.log("Video generation complete!");
-            } else {
-              console.log("Polling timed out.");
+
+          if (endpoint == "create_frames") {
+            if (currentProgress >= 75 || attempts >= maxAttempts) {
+              clearInterval(intervalId);
+              if (currentProgress >= 75) {
+                console.log("Frame creation complete");
+              } else {
+                console.log("Polling timed out.");
+              }
+              resolve(); // Resolve the promise when polling finishes
             }
-            resolve(); // Resolve the promise when polling finishes
+          }
+          if (endpoint == "render_video") {
+            if (currentProgress >= 100 || attempts >= maxAttempts) {
+              clearInterval(intervalId);
+              if (currentProgress >= 100) {
+                console.log("Video rendering complete!");
+              } else {
+                console.log("Polling timed out.");
+              }
+              resolve(); // Resolve the promise when polling finishes
+            }
           }
         } catch (error) {
           console.error("Error polling progress:", error);
@@ -409,6 +438,7 @@ function VideoEditor({ userID, sessionID }: Props) {
         formatTime,
         isRunning,
         videoProgress,
+        setVideoProgress,
       }}
     >
       <div className="container">

@@ -10,6 +10,11 @@ from user.user import supabase
 import pytz
 import datetime
 import shutil
+import threading
+
+# we start at 75 / 100 because the frames have already been made
+progress = 75
+video_info = {}  # will change once the video is done generating
 
 
 def download_audio_file(url: str, path: str):
@@ -154,22 +159,47 @@ def upload_video(file, user, session):
 # creation of video blueprint
 video_bp = Blueprint("video_bp", __name__)
 
+'''
+progress timeline
+0 - 75 frame write
+75 - 85 audio creation
+85 - 90 frame combination 
+90 - 95 gen vid
+95 - 100 upload
+'''
 
-@video_bp.route("/video/render_video", methods=["POST"])
-def render_video():
-    # receiving json containing: user, session, sessionDir, duration, audioTimeline
-    data = request.get_json()
-    print("Request received from express server")
+
+@video_bp.route("/video/render_progress", methods=["GET"])
+def get_progress():
+    global progress
+    return jsonify({"progress": progress})
+
+
+@video_bp.route("/video/get_info", methods=["GET"])
+def get_info():
+    '''
+    Returns the finished video information 
+    '''
+    global video_info
+    return jsonify(video_info), 200
+
+
+def render_video(data):
+    global progress
+    global video_info
 
     # generating audio (saved to sessionDir/output.mp3)
     audio_creation_time = generate_audio(
         data["audioTimeline"], data["duration"], data["sessionDir"])
+    progress += 10
 
     # generating muted video (saved to sessionDir/output.mp4)
     frame_combination_time = combine_frames(data["sessionDir"])
+    progress += 5
 
     # combining the muted video and audio (saved to sessionDir/final.mp4)
     video_path, audio_integration_time = generate_video(data["sessionDir"])
+    progress += 5
 
     # cleaning up resources (deleting audio and frame directories, as well as intermediate output files)
     clean_up(data["sessionDir"])
@@ -181,7 +211,7 @@ def render_video():
     total_time = data["assetLoadTime"] + data["frameWriteTime"] + \
         frame_combination_time + audio_creation_time + \
         audio_integration_time + upload_time
-
+    progress = 100
     timezone = pytz.timezone("US/Eastern")
     now = datetime.datetime.now(pytz.utc)
     localized_time = now.astimezone(timezone)
@@ -207,5 +237,16 @@ def render_video():
     }
     # updating the videos table in our database
     supabase.table("Videos").insert(video_info).execute()
+
+
+@video_bp.route("/video/render_video", methods=["POST"])
+def render():
+    # receiving json containing: user, session, sessionDir, duration, audioTimeline
+    data = request.get_json()
+
+    # doing the video rendering in the background so we can make polling requests
+    render_thread = threading.Thread(
+        target=render_video, args=(data,), daemon=True).start()
+
     # returning the video info
-    return jsonify(video_info), 200
+    return jsonify({"message": "Starting video rendering"}), 200

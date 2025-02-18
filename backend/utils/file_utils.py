@@ -120,17 +120,6 @@ def read_elements():
     return send_from_directory("./", "element-map.json")
 
 
-'''
-file utils
-- send element map and default configs
-- setup directories
-- handle file upload
-- send asset from directory
-- clear session (terminate directories)
-- get number of files in directory
-'''
-
-
 @file_bp.route("/file/setup_directories", methods=["POST"])
 def setup_directories():
     data = request.get_json()
