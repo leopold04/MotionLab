@@ -3,3 +3,9 @@
   border-radius: 10px;
   width: 80vh;
 }
+
+.control-panel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

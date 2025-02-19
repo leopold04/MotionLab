@@ -69,10 +69,9 @@ class BounceParticle {
       p1vy,
       gravity,
       this.ring,
-      config["particle_1_color"]!,
+      config["particle_1_appearance"]!,
       this.canvas,
       this.ctx,
-      config["particle_1_image"]!
     );
     this.p2 = new Particle(
       centerX,
@@ -84,8 +83,7 @@ class BounceParticle {
       this.ring,
       config["particle_2_color"]!,
       this.canvas,
-      this.ctx,
-      config["particle_2_image"]!
+      this.ctx
     );
 
     this.particles = [this.p1, this.p2];

@@ -105,19 +105,28 @@ def get_note_count(file_path):
 @file_bp.route("/file/get_asset/<path:file_path>")
 def send_asset(file_path):
     '''
-    serves asset relative to our root directory
+    Serves file relative to our ROOT directory
+    If the file comes from ../assets and not ../videos, we cache it, since it will never change
     '''
-    return send_from_directory("../", file_path)
+    response = send_from_directory("../", file_path)
+    if file_path.startswith("assets"):
+        # caching the response since our static assets will not change
+        response.headers['Cache-Control'] = 'public, max-age=31536000'
+
+    return response
 
 
 @file_bp.route("/file/default_configs", methods=["GET"])
 def read_defaults():
-    return send_from_directory("./", "default-configs.json")
+    response = send_from_directory("./", "default-configs.json")
+    return response
 
 
 @file_bp.route("/file/element_map", methods=["GET"])
 def read_elements():
-    return send_from_directory("./", "element-map.json")
+    response = send_from_directory("./", "element-map.json")
+
+    return response
 
 
 @file_bp.route("/file/setup_directories", methods=["POST"])

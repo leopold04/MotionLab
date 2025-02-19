@@ -2,11 +2,7 @@ import os
 from dotenv import load_dotenv, dotenv_values
 from flask import Blueprint, Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import requests
-import json
 from supabase import create_client, Client
-import time
-import shutil
 load_dotenv()
 supabase_url: str = str(os.environ.get("SUPABASE_URL"))
 supabase_key: str = str(os.environ.get("SUPABASE_KEY"))

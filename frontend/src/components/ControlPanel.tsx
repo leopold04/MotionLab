@@ -59,8 +59,8 @@ function ControlPanel() {
     // type InputType = "color" | "audio" | "image" | "gif";
     if (InputTypes.includes(inputType)) {
       let selector;
-      if (inputType == "color") {
-        selector = <Selector selectorType="color" setting={setting} defaultValue={value} key={setting} />;
+      if (inputType == "color" || inputType == "color_image") {
+        selector = <Selector defaultValue={value} selectorType={inputType} setting={setting} key={setting} />;
       } else {
         // only the color selector will have a default value for now
         selector = <Selector selectorType={inputType} setting={setting} key={setting} />;
@@ -69,7 +69,11 @@ function ControlPanel() {
     }
   }
 
-  return <form id="control-panel-form">{selectors}</form>;
+  return (
+    <form id="control-panel-form">
+      <div className="control-panel-container">{selectors}</div>
+    </form>
+  );
 }
 
 export default ControlPanel;

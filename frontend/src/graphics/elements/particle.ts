@@ -12,15 +12,15 @@ class Particle {
   vel: Vector;
   gravity: number;
   radius: number;
-  color: string;
+  color: any;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   container: Ring | Box;
   image: HTMLImageElement | any;
-  imageSource: any;
+  imageSource: any = null;
   // prettier-ignore
   constructor(x: number, y: number, radius: number, dx: number, dy: number, gravity: number,
-             container: Ring | Box, color: string, canvas: any, ctx: any, imageSource: string) {
+             container: Ring | Box, appearance: string, canvas: any, ctx: any) {
     this.pos = new Vector(x, y);
     this.radius = radius;
     this.vel = new Vector(dx, dy);
@@ -28,8 +28,11 @@ class Particle {
     this.canvas = canvas;
     this.ctx = ctx;
     this.container = container;
-    this.color = color;
-    this.imageSource = imageSource;
+    if (appearance.startsWith("#")){
+      this.color = appearance;
+    } else{
+      this.imageSource = appearance;
+    }
 
   }
 
@@ -115,7 +118,7 @@ class Particle {
 
   async setImage() {
     // if we have an image source passed in, we set that to the particle's image
-    if (this.imageSource != "") {
+    if (this.imageSource != null) {
       // getting image from our backend
       let src = "http://localhost:8000/file/get_asset/" + this.imageSource;
       try {

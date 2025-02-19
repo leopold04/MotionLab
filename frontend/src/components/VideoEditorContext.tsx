@@ -1,5 +1,5 @@
 import React, { createContext } from "react";
-type InputType = "color" | "audio" | "image" | "gif";
+type InputType = "color_image" | "color" | "audio" | "image" | "gif";
 // stores both the numerical progress and the url of the video once it is completed
 interface VideoProgression {
   progress: number;

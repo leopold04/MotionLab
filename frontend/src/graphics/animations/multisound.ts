@@ -89,8 +89,7 @@ class BounceParticle {
       this.ring,
       config["particle_1_color"]!,
       this.canvas,
-      this.ctx,
-      ""
+      this.ctx
     );
 
     this.particles = [this.p1];
@@ -132,6 +131,7 @@ class BounceParticle {
   // loading images (TODO: add loading all audio)
   // TODO: create failsafe if assets are not loaded in yet
   async load() {
+    console.log(this.config);
     let startTime = Date.now();
     let imagePromises = [];
     // initializing our image array to be full of null values so we can index into them properly later

@@ -1,6 +1,6 @@
 // parent component for all configurations
 // color/image selector, audio selector (sfx, song, midi), gif (url just for now), resolution, duration
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import VideoEditorContext from "./VideoEditorContext";
 import "../styles/Selector.css";
 interface Props {
@@ -10,6 +10,8 @@ interface Props {
 }
 
 function Selector({ selectorType, setting, defaultValue }: Props) {
+  const [appearance, setAppearance] = useState<string>("Color");
+  const [colors, setColors] = useState<string[]>(["#3262a8", "#6a947f", "#dbae9e"]);
   // getting functions from our video editor component
   const context = useContext(VideoEditorContext);
   if (context === undefined) {
@@ -19,17 +21,24 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
   const { handleColorChange, handleFileChange } = context;
 
   function colorSelector(setting: string, defaultValue: string) {
-    let colors = ["#3262a8", "#6a947f", "#dbae9e"];
+    function updateColorArray(newColor: string) {
+      // adding the new color to the beginning of the array and removing the last one
+      let colorsCopy = structuredClone(colors);
+      colorsCopy.unshift(newColor);
+      colorsCopy.pop();
+      setColors(colorsCopy);
+      console.log(colorsCopy);
+    }
     let colorButtons = [];
-    for (let color of colors) {
+    for (let i = 0; i < colors.length; i++) {
       // making a button for each color
       let colorButton = (
         <button
           type="button"
-          key={color}
+          key={colors[i] + i.toString()}
           className="color-button"
-          style={{ backgroundColor: color }}
-          onClick={() => handleColorChange(color, setting)}
+          style={{ backgroundColor: colors[i] }}
+          onClick={() => handleColorChange(colors[i], setting)}
         ></button>
       );
       colorButtons.push(colorButton);
@@ -44,6 +53,7 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
           id={setting}
           value={defaultValue}
           onChange={(e) => handleColorChange(e, setting)}
+          onBlur={(e) => updateColorArray(e.target.value)}
         />
       </div>
     );
@@ -73,6 +83,18 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
     );
   }
 
+  function colorImage(setting: string) {
+    return (
+      <div className="color-image-option">
+        <label>Color</label>
+        <input type="radio" id="color" name="appearance" value="Color" onClick={() => setAppearance("Color")} />
+        <label>Image</label>
+        <input type="radio" id="image" name="appearance" value="Image" onClick={() => setAppearance("Image")} />
+        {appearance == "Color" ? colorSelector(setting, defaultValue!) : imageSelector(setting)}
+      </div>
+    );
+  }
+
   function audioSelector(setting: string): JSX.Element {
     return (
       <div>
@@ -95,6 +117,7 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
 
   let map: any = {
     color: colorSelector(setting, defaultValue!),
+    color_image: colorImage(setting),
     image: imageSelector(setting),
     audio: audioSelector(setting),
     gif: gifSelector(setting),

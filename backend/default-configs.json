@@ -6,8 +6,7 @@
     "canvas_width": 720,
     "canvas_height": 1280,
     "background_color": "#ebedf0",
-    "particle_1_color": "#88b0db",
-    "particle_1_image": "assets/images/arsenal.png",
+    "particle_1_appearance": "#88b0db",
     "particle_2_color": "#729c8c",
     "particle_2_image": "",
     "collision_sound": "assets/sound_effects/button2.mp3"
@@ -21,7 +20,7 @@
     "background_color": "#dadce3",
     "particle_1_color": "#88b0db",
     "collision_sound": "assets/songs/rat.mp3",
-    "sequence": "assets/frame_sequences/mario",
+    "sequence": "assets/frame_sequences/dance",
     "sequence_frame_count": 16,
     "sequence_fps": 3
   },
@@ -36,8 +35,7 @@
     "particle_1_image": "",
     "particle_2_color": "#729c8c",
     "particle_2_image": "",
-    "collision_sound": "assets/sound_effects/button2.mp3",
-    "midi_song": "assets/midi/gfalls"
+    "midi_song": "assets/midi/mii-track"
   },
   "particle-arc": {
     "name": "PARC",

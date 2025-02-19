@@ -10,8 +10,8 @@ interface Props {
 }
 
 function VideoEditor({ userID, sessionID }: Props) {
-  type InputType = "color" | "audio" | "image" | "gif";
-  let InputTypes: InputType[] = ["color", "audio", "image", "gif"];
+  type InputType = "color_image" | "color" | "audio" | "image" | "gif";
+  let InputTypes: InputType[] = ["color_image", "color", "audio", "image", "gif"];
 
   const animationRef = useRef<any>(null);
   const AnimationClassRef = useRef<any>(null);
@@ -237,6 +237,7 @@ function VideoEditor({ userID, sessionID }: Props) {
         body: JSON.stringify(videoData),
       });
       // poll progress and wait for the frames to be created
+      setVideoProgress({ progress: 0.01, url: null }); // this just triggers the change in appearance for our button
       await pollProgress("create_frames");
 
       const info_response = await fetch("http://localhost:3000/video/get_info");
