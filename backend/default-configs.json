@@ -21,8 +21,8 @@
     "particle_1_color": "#88b0db",
     "collision_sound": "assets/songs/rat.mp3",
     "sequence": "assets/frame_sequences/dance",
-    "sequence_frame_count": 16,
-    "sequence_fps": 3
+    "sequence_frame_count": 223,
+    "sequence_fps": 20
   },
   "midibounce": {
     "name": "midi bounce",
@@ -31,10 +31,8 @@
     "canvas_width": 720,
     "canvas_height": 1280,
     "background_color": "#ffffff",
-    "particle_1_color": "#88b0db",
-    "particle_1_image": "",
+    "particle_1_appearance": "#88b0db",
     "particle_2_color": "#729c8c",
-    "particle_2_image": "",
     "midi_song": "assets/midi/mii-track"
   },
   "particle-arc": {

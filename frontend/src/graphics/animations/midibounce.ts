@@ -115,6 +115,12 @@ class BounceParticle {
     if (typeof window === "object") {
       console.log(this.notePaths);
     }
+
+    // loading images if necessary
+    for (let p of this.particles) {
+      await p.setImage();
+    }
+
     let loadTime = (Date.now() - startTime) / 1000;
     return loadTime;
   }

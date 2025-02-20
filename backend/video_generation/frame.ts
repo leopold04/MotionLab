@@ -18,6 +18,7 @@ let assetLoadTime = 0;
 let config: AnimationConfig;
 const fps = 60; // Frames per second for both the generated frames and the final video
 let progress = 0;
+
 async function run(animationName: string) {
   try {
     // Dynamically import the correct animation file

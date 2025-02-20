@@ -17,6 +17,16 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
   if (context === undefined) {
     throw new Error("Context is not defined");
   }
+  function format(str: string) {
+    //  "particle_1_color" => Particle 1 Color
+    return (
+      str
+        // Replace all underscores (_) with spaces
+        .replace(/_/g, " ")
+        // Capitalize the first letter of each word
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+    );
+  }
 
   const { handleColorChange, handleFileChange } = context;
 
@@ -61,10 +71,10 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
     colorButtons.push(customColorSelector);
 
     return (
-      <div className="color-picker">
-        <p>{setting}</p>
-        {colorButtons}
-      </div>
+      <>
+        <p>{format(setting)}</p>
+        <div className="color-picker">{colorButtons}</div>
+      </>
     );
   }
 
@@ -72,7 +82,7 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
   function imageSelector(setting: string): JSX.Element {
     return (
       <div>
-        <label htmlFor={setting}>{setting}</label>
+        <label htmlFor={setting}>{format(setting)}</label>
         <input
           type="file"
           id={setting}
@@ -98,7 +108,7 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
   function audioSelector(setting: string): JSX.Element {
     return (
       <div>
-        <label htmlFor={setting}>{setting}</label>
+        <label htmlFor={setting}>{format(setting)}</label>
         <input type="file" id={setting} accept="audio/mpeg" onChange={(e) => handleFileChange(e, setting)} />
       </div>
     );
@@ -109,7 +119,7 @@ function Selector({ selectorType, setting, defaultValue }: Props) {
   function gifSelector(setting: string): JSX.Element {
     return (
       <div>
-        <label htmlFor={setting}>{setting}</label>
+        <label htmlFor={setting}>{format(setting)}</label>
         <input type="file" id={setting} accept="image/gif" onChange={(e) => handleFileChange(e, setting)} />
       </div>
     );

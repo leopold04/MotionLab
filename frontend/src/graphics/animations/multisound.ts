@@ -32,7 +32,7 @@ class BounceParticle {
   centerX: number;
   centerY: number;
   // number of frames we allow to pass without a bounce before we have to restart the audio
-  soundBuffer: number = 60;
+  soundBuffer: number = 45;
   constructor(config: AnimationConfig) {
     // generating headless with node js
     if (typeof window === "undefined") {
