@@ -1,11 +1,13 @@
 import "../styles/Sidebar.css";
-
+import { Link } from "react-router-dom";
 function Sidebar() {
   return (
     <div className="sidebar">
       <h2>MotionLab</h2>
       <ul>
-        <li>Create Video</li>
+        <Link to="/dashboard">
+          <button>Create Video</button>
+        </Link>
         <li>My videos</li>
         <hr></hr>
         <li>Join our discord</li>

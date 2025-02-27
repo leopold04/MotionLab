@@ -1,15 +1,18 @@
 import "../styles/VideoEditor.css";
 import { useState, useEffect, useRef } from "react";
 import AnimationConfig from "../graphics/utils/animation-config";
-import VideoEditorContext from "./VideoEditorContext";
-import ControlPanel from "./ControlPanel";
-import VideoPlayer from "./VideoPlayer";
-interface Props {
-  userID: string;
-  sessionID: string;
-}
+import VideoEditorContext from "../components/VideoEditorContext";
+import ControlPanel from "../components/ControlPanel";
+import VideoPlayer from "../components/VideoPlayer";
+import { useParams } from "react-router-dom";
 
-function VideoEditor({ userID, sessionID }: Props) {
+function VideoEditor() {
+  const userID = "1234";
+  // getting the url params
+  const params = useParams<{ animationName: string }>();
+
+  // allows us to listen for route changes
+  let animation = params["animationName"]!;
   type InputType = "color_image" | "color" | "audio" | "image" | "gif";
   let InputTypes: InputType[] = ["color_image", "color", "audio", "image", "gif"];
 
@@ -17,20 +20,94 @@ function VideoEditor({ userID, sessionID }: Props) {
   const AnimationClassRef = useRef<any>(null);
   const [videoProgress, setVideoProgress] = useState<any>({ progress: 0, url: null });
   const [formElements, setFormElements] = useState<[string, any, InputType][]>([]);
-  const [animationName, setAnimationName] = useState<string>("particle-ring");
-  const [animationNameMap, setAnimationNameMap] = useState<{ [key: string]: string }>({});
   const configRef = useRef<any>(null);
   const [resolution, setResolution] = useState("720p");
   const [isRunning, setIsRunning] = useState(false);
   const intervalID = useRef<any>(null);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState<number>(0);
+  const [sessionID, setSessionID] = useState<any>("");
 
   const videoResolutions: { [key: string]: number[] } = {
     "480p": [480, 854],
     "720p": [720, 1280],
     "1080p": [1080, 1920],
   };
+
+  function generateHash(length: number = 5): string {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let hash = "";
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      hash += characters[randomIndex];
+    }
+    return hash;
+  }
+
+  // once the user reloads or closes the page, we remove the directories associated with their session
+  async function clearSession() {
+    const userInfo = { userID: userID, sessionID: sessionID };
+    try {
+      // Use sendBeacon to ensure the request is sent before the page unloads
+      // the data we send with sendBeacon is turned into bytes, so we decode it into string then json on our backend
+      const success = navigator.sendBeacon("http://localhost:8000/file/clear_session", JSON.stringify(userInfo));
+
+      if (success) {
+        console.log(`Session ${sessionID} cleared successfully`);
+      } else {
+        console.error("Failed to send beacon");
+      }
+    } catch (error) {
+      console.error("Error clearing session:", error);
+    }
+  }
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && !sessionID) {
+        const newSession = generateHash();
+        setSessionID(newSession);
+        console.log("Page is visible, session created:", newSession);
+      }
+    };
+
+    // Listen for visibility changes
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Check if the page is already visible when the component mounts
+    handleVisibilityChange();
+
+    // Clean up the event listener
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [sessionID]);
+
+  // react state updates are asynchronous, so calling setSession() might not immediately update it
+  // we can use the useEffect hook to re-render the component once we set the session correctly
+  useEffect(() => {
+    console.log("sessionID:", sessionID);
+  }, [sessionID]);
+  // our dashboard page is reloaded/closed, so we delete assets tied to the user on our disk
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (sessionID) {
+        clearSession();
+
+        console.log("removing directory " + sessionID);
+      }
+      console.log("reload or close");
+    };
+
+    // Add the event listener for beforeunload
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Clean up the event listener when the component is unmounted (optional, but good practice)
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [sessionID]);
 
   // setting up directories for adding assets and video creation
   async function setupDirectories(userID: string, sessionID: string) {
@@ -60,9 +137,9 @@ function VideoEditor({ userID, sessionID }: Props) {
    * displayed in the editor.
    */
   useEffect(() => {
-    switchAnimation(animationName);
-    console.log("Animation: " + animationName);
-  }, [animationName]);
+    switchAnimation(animation);
+    console.log("Animation: " + animation);
+  }, [animation]);
 
   // we can use a state for the time here because even if the page re renders (since the state of is running changes)
   // the animation will not be re rendered, since it is a reference.
@@ -105,10 +182,11 @@ function VideoEditor({ userID, sessionID }: Props) {
     let elementList = await createElementList(configRef.current);
     setFormElements(elementList);
     let nameMap: { [key: string]: string } = {};
+
+    // want to get categories later on
     for (let file_name of Object.keys(data)) {
       nameMap[file_name] = data[file_name]["name"];
     }
-    setAnimationNameMap(nameMap);
     setDuration(data[animation]["duration"]);
   }
 
@@ -157,6 +235,7 @@ function VideoEditor({ userID, sessionID }: Props) {
       const module = await import(/* @vite-ignore */ animationPath);
       AnimationClassRef.current = module.default;
       animationRef.current = new AnimationClassRef.current(configRef.current);
+      randomizeAnimation();
       // waiting for assets to load
       await animationRef.current.load();
       animationRef.current.draw();
@@ -172,7 +251,7 @@ function VideoEditor({ userID, sessionID }: Props) {
    * reinitializes it with the current configuration settings.
    */
   async function resetAnimation() {
-    let animationPath = `../graphics/animations/${animationName}`;
+    let animationPath = `../graphics/animations/${animation}`;
     if (animationRef.current != null) {
       animationRef.current.pause();
     }
@@ -205,17 +284,6 @@ function VideoEditor({ userID, sessionID }: Props) {
   }
 
   /**
-   * Handles changes to the animation selection dropdown.
-   * This function updates the state with the selected animation name.
-   *
-   * @param {React.ChangeEvent<HTMLSelectElement>} event - The change event
-   *          from the select element.
-   */
-  function handleAnimationChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setAnimationName(event.target.value);
-  }
-
-  /**
    * Sends a request to generate a video with the current animation settings.
    * This function constructs a video data object containing user info,
    * video info, and animation info, and sends it to the server via a POST request.
@@ -226,7 +294,7 @@ function VideoEditor({ userID, sessionID }: Props) {
     let videoData = {
       userInfo: { userID: userID, sessionID: sessionID },
       videoInfo: { duration: duration },
-      animationInfo: { animationName: animationName, config: configRef.current },
+      animationInfo: { animationName: animation, config: configRef.current },
     };
     try {
       // send request to express backend to make the frames
@@ -427,26 +495,8 @@ function VideoEditor({ userID, sessionID }: Props) {
       }}
     >
       <div className="container">
-        <h1>Studio</h1>
         <div className="video-editor">
           <div className="config-column">
-            <form id="animation-form">
-              <label>Choose an animation template</label>
-              <select name="animations" id="animation-selection" value={animationName} onChange={handleAnimationChange}>
-                {/** Setting the option selects to the names of our animations
-                 * nameMap = {"particle-ring": "two particles"}
-                 * nameMap["file_name"] = "animation_name"
-                 *
-                 */}
-                {Object.keys(animationNameMap).map((name) => {
-                  return (
-                    <option key={name} value={name}>
-                      {animationNameMap[name]}
-                    </option>
-                  );
-                })}
-              </select>
-            </form>
             <ControlPanel />
           </div>
           <VideoPlayer />

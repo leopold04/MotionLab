@@ -57,6 +57,7 @@ function VideoPlayer() {
     downloadUrl.searchParams.append("download", "video.mp4");
 
     // Create a new anchor element
+
     let a = document.createElement("a");
 
     // Set the href of the anchor element to the download URL
@@ -73,6 +74,9 @@ function VideoPlayer() {
 
     // Remove the anchor element from the body
     document.body.removeChild(a);
+
+    // note that clicking an anchor tag simulates a full refresh of the page
+    // so we might want to think about using Link instead
 
     // now we set the progress back to 0 to let a new video be made by the user
     setVideoProgress({ progress: 0, url: null });

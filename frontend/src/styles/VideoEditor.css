@@ -18,11 +18,10 @@ h1 {
 .video-editor {
   display: flex;
   flex-direction: row;
-  height: 85vh;
-  margin: 0px 20px 0px 270px;
+  height: 90%;
+  margin: 0px 20px 0px 20px;
   padding: 20px;
   background-color: #ccced2;
-  border-radius: 20px;
   gap: 40px;
 }
 
