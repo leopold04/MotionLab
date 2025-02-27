@@ -4,15 +4,19 @@ import AnimationConfig from "../graphics/utils/animation-config";
 import VideoEditorContext from "../components/VideoEditorContext";
 import ControlPanel from "../components/ControlPanel";
 import VideoPlayer from "../components/VideoPlayer";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 
 function VideoEditor() {
   const userID = "1234";
   // getting the url params
   const params = useParams<{ animationName: string }>();
 
-  // allows us to listen for route changes
+  // current animation that was passed in through params
   let animation = params["animationName"]!;
+
+  // location for checking route change for component unmount
+  const location = useLocation();
+
   type InputType = "color_image" | "color" | "audio" | "image" | "gif";
   let InputTypes: InputType[] = ["color_image", "color", "audio", "image", "gif"];
 
@@ -25,7 +29,9 @@ function VideoEditor() {
   const [isRunning, setIsRunning] = useState(false);
   const intervalID = useRef<any>(null);
   const [time, setTime] = useState(0);
+  // duration of the video
   const [duration, setDuration] = useState<number>(0);
+  // video session ID
   const [sessionID, setSessionID] = useState<any>("");
 
   const videoResolutions: { [key: string]: number[] } = {
@@ -83,6 +89,17 @@ function VideoEditor() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [sessionID]);
+
+  useEffect(() => {
+    console.log("Entered route:", location.pathname);
+
+    // Cleanup function: runs when the component unmounts or before the route changes
+    return () => {
+      console.log("Left route:", location.pathname);
+      clearSession(); // Call clearSession when leaving the route
+      resetAnimation();
+    };
+  }, [location.pathname]);
 
   // react state updates are asynchronous, so calling setSession() might not immediately update it
   // we can use the useEffect hook to re-render the component once we set the session correctly
@@ -352,7 +369,7 @@ function VideoEditor() {
           const currentProgress = data.progress;
 
           // setting the progress of the video's generation
-          setVideoProgress({ progress: currentProgress, url: null });
+          setVideoProgress({ progress: Math.max(currentProgress, 0.01), url: null });
 
           if (endpoint == "create_frames" && currentProgress == 75) {
             clearInterval(intervalId);
