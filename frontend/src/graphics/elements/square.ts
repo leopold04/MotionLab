@@ -1,23 +1,32 @@
 import Vector from "./vector.js";
 import Box from "./box.js";
+import { loadImage } from "canvas";
+import emitter from "../utils/emitter.js";
+
 class Square {
   // (x,y) is the top left corner of the square
   pos: Vector;
   vel: Vector;
   size: number;
-  color: string; // change later
+  color: any; // change later
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   box: Box;
+  image: HTMLImageElement | any;
+  imageSource: any = null;
   // prettier-ignore
-  constructor(x: number, y: number, size: number, dx: number, dy: number, color: string, box: Box, canvas: any, ctx: any) {
+  constructor(x: number, y: number, size: number, dx: number, dy: number, appearance: string, box: Box, canvas: any, ctx: any) {
     this.pos = new Vector(x, y);
     this.size = size;
     this.vel = new Vector(dx, dy);
-    this.color = color;
     this.canvas = canvas;
     this.ctx = ctx;
     this.box = box;
+    if (appearance.startsWith("#")){
+      this.color = appearance;
+    } else{
+      this.imageSource = appearance;
+    }
   }
 
   move() {
@@ -26,19 +35,40 @@ class Square {
 
     // Bounce off the walls of box
     if (this.pos.x <= this.box.x || this.pos.x + this.size >= this.box.x + this.box.size) {
+      emitter.emit("collision");
+
       // putting the square back in the box
       this.pos.x = this.pos.x <= this.box.x ? this.box.x + 1 : this.box.x + this.box.size - this.size - 1;
       this.vel.x *= -1;
     }
     if (this.pos.y <= this.box.y || this.pos.y + this.size >= this.box.y + this.box.size) {
+      emitter.emit("collision");
+
       this.pos.y = this.pos.y <= this.box.y ? this.box.y + 1 : this.box.y + this.box.size - this.size - 1;
       this.vel.y *= -1;
     }
   }
 
   draw() {
-    this.ctx.fillStyle = this.color;
-    this.ctx.fillRect(this.pos.x, this.pos.y, this.size, this.size);
+    if (this.image) {
+      this.ctx.drawImage(this.image, this.pos.x, this.pos.y, this.size, this.size);
+    } else {
+      this.ctx.fillStyle = this.color;
+      this.ctx.fillRect(this.pos.x, this.pos.y, this.size, this.size);
+    }
+  }
+
+  async setImage() {
+    // if we have an image source passed in, we set that to the particle's image
+    if (this.imageSource != null) {
+      // getting image from our backend
+      let src = "http://localhost:8000/file/get_asset/" + this.imageSource;
+      try {
+        this.image = await loadImage(src);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 
   static handleSquareCollision(s1: Square, s2: Square): void {
@@ -46,6 +76,7 @@ class Square {
     const angle = this.collisionAngle(s1, s2);
 
     if (angle !== null) {
+      emitter.emit("collision");
       // Handle collision response if collision occurs
       if ((angle >= 0 && angle < 45) || (angle > 315 && angle < 360)) {
         // Zone 1 - Right

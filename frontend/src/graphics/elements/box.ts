@@ -1,5 +1,5 @@
 import Square from "./square.js";
-import Particle from "./particle.js";
+import SeededRandom from "../utils/random.js";
 class Box {
   // hollow square meant to contain objects like particles or squares
   canvas: HTMLCanvasElement;
@@ -12,7 +12,7 @@ class Box {
     this.canvas = canvas;
     this.ctx = ctx;
     // box size is proportional to width of screen
-    this.size = this.canvas.width / 2;
+    this.size = this.canvas.width * 0.95;
     // centering the box
     this.x = (this.canvas.width - this.size) / 2;
     this.y = (this.canvas.height - this.size) / 2;
@@ -33,12 +33,8 @@ class Box {
     this.y = (this.canvas.height - this.size) / 2;
   }
 
-  randomRange(min: number, max: number): number {
-    // Use Math.random() to generate a number between min and max (inclusive of max)
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  randomizeSquarePositions(elements: Square[]): void {
+  randomizeSquarePositions(elements: Square[], seed: number): void {
+    const rng = new SeededRandom(seed);
     // Function to check for collisions
     const collisions = function (elements: Square[]): boolean {
       for (let i = 0; i < elements.length; i++) {
@@ -56,8 +52,8 @@ class Box {
     while (!allValid) {
       // First, randomize each square's position
       for (let s of elements) {
-        s.pos.x = this.randomRange(this.x, this.x + this.size - s.size);
-        s.pos.y = this.randomRange(this.y, this.y + this.size - s.size);
+        s.pos.x = rng.randomRange(this.x, this.x + this.size - s.size);
+        s.pos.y = rng.randomRange(this.y, this.y + this.size - s.size);
       }
 
       // Check for collisions
@@ -65,10 +61,6 @@ class Box {
     }
 
     // Optionally: Randomize velocities or other properties here.
-  }
-
-  randomizeParticlePositions(elements: Particle[]): void {
-    console.log(elements);
   }
 }
 export default Box;

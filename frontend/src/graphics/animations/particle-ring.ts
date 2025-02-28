@@ -21,7 +21,6 @@ class BounceParticle {
   soundSource: string;
 
   constructor(config: AnimationConfig) {
-    // generating headless with node js
     if (typeof window === "undefined") {
       this.canvas = createCanvas(config["canvas_width"], config["canvas_height"]);
       this.ctx = this.canvas.getContext("2d")!;

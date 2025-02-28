@@ -1,27 +1,27 @@
 import AnimationConfig from "../utils/animation-config.js";
 import Square from "../elements/square.js";
 import Box from "../elements/box.js";
+import emitter from "../utils/emitter.js";
+import { createCanvas, Canvas, CanvasRenderingContext2D } from "canvas";
 
 class BounceSquare {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+  canvas: HTMLCanvasElement | Canvas;
+  ctx: CanvasRenderingContext2D | any;
   s1: Square;
   s2: Square;
-  s3: Square;
   box: Box;
   squares: Square[];
-
   frame: number = 0;
   fps: number = 60;
   audioTimeline: object[] = [];
   config: AnimationConfig;
   playing: boolean = false;
+  seed: number;
   requestID: number | null = null; // Variable to hold the requestAnimationFrame ID
 
+  collisionSource: string = "";
   constructor(config: AnimationConfig) {
-    // generating headless with node js
     if (typeof window === "undefined") {
-      const { createCanvas } = require("canvas");
       this.canvas = createCanvas(config["canvas_width"], config["canvas_height"]);
       this.ctx = this.canvas.getContext("2d")!;
     } else {
@@ -30,17 +30,74 @@ class BounceSquare {
       this.canvas.width = config["canvas_width"];
       this.canvas.height = config["canvas_height"];
     }
+
+    let scaleFactor;
+    switch (config["canvas_width"]) {
+      case 480:
+        scaleFactor = 2 / 3;
+        break;
+      case 720:
+        scaleFactor = 1;
+        break;
+      case 1080:
+        scaleFactor = 3 / 2;
+        break;
+      default:
+        scaleFactor = 1;
+        break;
+    }
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
+
     this.box = new Box(this.canvas, this.ctx);
     const box_size = this.box.size;
-    // prettier-ignore
-    this.s1 = new Square( this.box.x + 10, 100, box_size * 0.1, 1, 2, "red", this.box, this.canvas, this.ctx);
-    // prettier-ignore
-    this.s2 = new Square(this.box.x + 80,this.box.y + 100,box_size * 0.1,3, -4, "blue",this.box,this.canvas,this.ctx);
-    // prettier-ignore
-    this.s3 = new Square(500,400,box_size * 0.1,-2, -3,"green", this.box, this.canvas,this.ctx);
-    this.squares = [this.s1, this.s2, this.s3];
-    this.box.randomizeSquarePositions(this.squares);
+
+    this.s1 = new Square(
+      centerX + 50 * scaleFactor,
+      centerY + 50 * scaleFactor,
+      box_size * 0.2 * scaleFactor,
+      6 * scaleFactor,
+      4 * scaleFactor,
+      config["square_1_appearance"]!,
+      this.box,
+      this.canvas,
+      this.ctx
+    );
+    this.s2 = new Square(
+      centerX - 50 * scaleFactor,
+      centerY - 50 * scaleFactor,
+      box_size * 0.2 * scaleFactor,
+      -8 * scaleFactor,
+      7 * scaleFactor,
+      config["square_2_appearance"]!,
+      this.box,
+      this.canvas,
+      this.ctx
+    );
+    this.squares = [this.s1, this.s2];
+    this.seed = config["seed"] as number;
+    this.box.randomizeSquarePositions(this.squares, this.seed);
     this.config = config;
+
+    emitter.clear();
+    emitter.on("collision", () => this.handleSound());
+  }
+
+  async load() {
+    let startTime = Date.now();
+    try {
+      // loading images
+      for (let s of this.squares) {
+        await s.setImage();
+      }
+
+      // load sound from backend
+      this.collisionSource = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
+    } catch (error) {
+      console.log("error loading images");
+    }
+    let loadTime = (Date.now() - startTime) / 1000;
+    return loadTime;
   }
 
   // updating positions of all things (squares, containers, etc)
@@ -57,12 +114,11 @@ class BounceSquare {
     this.frame++;
   }
 
-  // drawing all things
   draw() {
+    // drawing objects on screen
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear the canvas
-    // drawing squares / boxes
-    this.ctx.fillStyle = this.config["background_color"] as string;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = this.config["background_color"] as string; // set background color
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); // draw background
 
     for (let s of this.squares) {
       s.draw();
@@ -70,15 +126,12 @@ class BounceSquare {
     this.box.draw();
   }
 
-  handleSound(sound: string) {
-    // path needs to be relative to the file it is being run in
+  handleSound() {
     if (typeof window === "undefined") {
-      // path is relative to main dir (since we run it )
-      this.audioTimeline.push({ audio: `./assets/${sound}`, frame: this.frame });
+      this.audioTimeline.push({ audio: this.collisionSource, frame: this.frame });
     } else {
-      // path is relative to index.html
-      const a = new Audio(`../assets/${sound}`);
-      a.play();
+      const audio = new Audio(this.collisionSource);
+      audio.play();
     }
   }
 
@@ -114,20 +167,14 @@ class BounceSquare {
       cancelAnimationFrame(this.requestID); // Cancel the animation frame request
       this.requestID = null;
     }
-    console.log("paused");
   }
 
   // Start playing the animation
   play() {
     if (!this.playing) {
       this.playing = true;
-      console.log("playing");
       this.animate(); // Start the animation loop if not already playing
     }
   }
-}
-
-if (typeof window === "undefined") {
-  module.exports = BounceSquare;
 }
 export default BounceSquare;

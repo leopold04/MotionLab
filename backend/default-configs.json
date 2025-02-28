@@ -8,7 +8,6 @@
     "background_color": "#ebedf0",
     "particle_1_appearance": "#88b0db",
     "particle_2_color": "#729c8c",
-    "particle_2_image": "",
     "collision_sound": "assets/sound_effects/button2.mp3"
   },
   "multisound": {
@@ -43,10 +42,14 @@
     "background_color": "#edd3d1"
   },
   "square-box": {
-    "name": "Square Battle",
-    "seed": 0,
+    "name": "Two particles bouncing",
+    "duration": 10,
+    "seed": 3,
     "canvas_width": 720,
     "canvas_height": 1280,
-    "background_color": "#bbdaed"
+    "background_color": "#ebedf0",
+    "square_1_appearance": "#88b0db",
+    "square_2_appearance": "#729c8c",
+    "collision_sound": "assets/sound_effects/button2.mp3"
   }
 }

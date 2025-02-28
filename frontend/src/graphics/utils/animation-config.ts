@@ -1,29 +1,35 @@
 // including all the customizable settings. some are required and the other are optional (such as colors)
 
 type AnimationConfig = {
+  name?: string;
   canvas_width: number;
   canvas_height: number;
+  seed?: number;
   background_color?: string;
+  duration: number;
+
   particle_1_image?: string;
   particle_1_appearance?: string;
-  particle_2_appearance?: string;
-  /* keep appearance,color, and image bc there are times where we might want to:
-  - only allow colors
-  - allow color and image
-  - just allow image
-*/
-  particle_2_image?: string;
   particle_1_color?: string;
+
+  particle_2_appearance?: string;
+  particle_2_image?: string;
   particle_2_color?: string;
-  particle_size?: number;
-  collision_sound?: string;
-  seed?: number;
-  name?: string;
-  duration: number;
-  sound?: string;
+
+  square_1_color?: string;
+  square_1_appearance?: string;
+  square_1_image?: string;
+
+  square_2_color?: string;
+  square_2_appearance?: string;
+  square_2_image?: string;
+
   sequence?: string;
   sequence_fps?: number;
   sequence_frame_count?: number;
+
+  collision_sound?: string;
+  sound?: string;
   midi_song?: string;
 };
 

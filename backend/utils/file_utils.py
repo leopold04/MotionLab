@@ -17,6 +17,7 @@ file_bp = Blueprint("file_bp", __name__)
 content_map = {
     "mp3": "audio/mpeg",
     "jpeg": "image/jpeg",
+    "jpg": "image/jpg",
     "png": "image/png",
     "gif": "image/gif"
 }
@@ -56,6 +57,9 @@ def upload_asset():
             file_path = os.path.join(sound_dir, filename)
         case "jpeg":
             file_path = os.path.join(image_dir, filename)
+        case "jpg":
+            file_path = os.path.join(image_dir, filename)
+
         case "png":
             file_path = os.path.join(image_dir, filename)
         case "gif":
@@ -72,7 +76,8 @@ def upload_asset():
                 # ../videos/user/session/assets => videos/user/session/assets
                 file_path = file_path[3:]
             return jsonify({"src": file_path, "content-type": content_map[extension]}), 200
-        except:
+        except Exception as e:
+            print(e)
             return jsonify({"message": "could not upload file"}), 400
     else:
         # file writing has already been done, so we just return the gif info
