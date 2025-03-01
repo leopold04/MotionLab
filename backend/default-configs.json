@@ -35,14 +35,19 @@
     "midi_song": "assets/midi/mii-track"
   },
   "particle-arc": {
-    "name": "PARC",
-    "seed": 0,
+    "name": "Particle in Arc",
+    "duration": 30,
+    "seed": 3,
     "canvas_width": 720,
     "canvas_height": 1280,
-    "background_color": "#edd3d1"
+    "background_color": "#ebedf0",
+    "particle_1_appearance": "#88b0db",
+    "particle_2_color": "#729c8c",
+    "collision_sound": "assets/sound_effects/button7.mp3",
+    "escape_sound": "assets/sound_effects/button3.mp3"
   },
   "square-box": {
-    "name": "Two particles bouncing",
+    "name": "Two squares bouncing",
     "duration": 10,
     "seed": 3,
     "canvas_width": 720,

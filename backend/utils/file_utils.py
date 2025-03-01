@@ -183,6 +183,9 @@ def clear_session_directory():
     try:
         if (os.path.isdir(session_dir)):
             shutil.rmtree(session_dir)
-        return jsonify({"message": f"successfully removed {session_dir}"}), 200
+            return jsonify({"message": f"successfully removed {session_dir}"}), 200
+        else:
+            return jsonify({"message": f"{session_dir} does not exist"}), 200
     except Exception as e:
+        print(e)
         return jsonify({"message": "An error occurred"}), 400

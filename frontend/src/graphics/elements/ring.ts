@@ -2,13 +2,11 @@ import Vector from "./vector.js";
 import Particle from "./particle.js";
 import SeededRandom from "../utils/random.js";
 class Ring {
-  // hollow circle drawn with arc
   pos: Vector;
   radius: number;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  // prettier-ignore
-  constructor(radius: number, canvas:any, ctx: any){
+  constructor(radius: number, canvas: any, ctx: any) {
     this.radius = radius;
     this.canvas = canvas;
     this.ctx = ctx;

@@ -15,12 +15,13 @@ class Particle {
   color: any;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  container: Ring | Box;
+  container: Ring | Box | Arc;
   image: HTMLImageElement | any;
   imageSource: any = null;
+  inArc: boolean = true;
   // prettier-ignore
   constructor(x: number, y: number, radius: number, dx: number, dy: number, gravity: number,
-             container: Ring | Box, appearance: string, canvas: any, ctx: any) {
+             container: Ring | Box | Arc, appearance: string, canvas: any, ctx: any) {
     this.pos = new Vector(x, y);
     this.radius = radius;
     this.vel = new Vector(dx, dy);
@@ -68,8 +69,7 @@ class Particle {
         let proj_v_t = Vector.mul(tangent, scale);
         let new_vel = Vector.sub(Vector.mul(proj_v_t, 2), this.vel);
         this.vel = Vector.clone(new_vel);
-        // ensuring there is no loss of energy over time
-        // might need to tweak this value
+
         this.vel.y -= this.gravity / 2;
         let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
         this.pos = Vector.add(this.container.pos, new_pos);
@@ -80,20 +80,61 @@ class Particle {
       let dist = Vector.sub(this.pos, this.container.pos);
       let norm = Vector.magnitude(dist);
       if (norm + this.radius > this.container.radius) {
-        let dist_unit = Vector.normalize(dist);
-        let tangent = Vector.perpendicular(dist);
-        let scale = Vector.dot(this.vel, tangent) / Vector.dot(tangent, tangent);
-        let proj_v_t = Vector.mul(tangent, scale);
-        let new_vel = Vector.sub(Vector.mul(proj_v_t, 2), this.vel);
-        this.vel = Vector.clone(new_vel);
-        // rotation code
-        //  this.vel = Vector.add(this.vel, Vector.mul(tangent, this.container.rotationSpeed));
-        // to prevent energy loss
-        this.vel.y -= this.gravity / 2;
-        let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
-        this.pos = Vector.add(this.container.pos, new_pos);
-        emitter.emit("collision");
+        if (this.hasEscaped()) {
+          this.inArc = false;
+        }
+        if (this.inArc) {
+          let dist_unit = Vector.normalize(dist);
+          let tangent = Vector.perpendicular(dist);
+          let scale = Vector.dot(this.vel, tangent) / Vector.dot(tangent, tangent);
+          let proj_v_t = Vector.mul(tangent, scale);
+          let new_vel = Vector.sub(Vector.mul(proj_v_t, 2), this.vel);
+          this.vel = Vector.clone(new_vel);
+          this.vel.y -= this.gravity / 2;
+          let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
+          this.pos = Vector.add(this.container.pos, new_pos);
+          emitter.emit("collision");
+        }
       }
+    }
+  }
+
+  hasEscaped() {
+    const arc = this.container as Arc;
+    let dist = Vector.sub(this.pos, arc.pos);
+    let angle = -Math.atan2(dist.y, dist.x);
+    let start = arc.startAngle;
+    let end = arc.endAngle;
+
+    if (angle < 0) {
+      angle += 2 * Math.PI;
+    }
+    if (start < 0) {
+      start += 2 * Math.PI;
+    }
+    if (end < 0) {
+      end += 2 * Math.PI;
+    }
+    let escape = false;
+    if (start > end) {
+      // ex: start = 357 in degrees, end = 42 in degrees
+      // 2 different ranges to check
+      if ((angle >= start && angle < 360) || (angle >= 0 && angle <= end)) {
+        escape = true;
+      }
+    } else {
+      // if both angles are positive, do normal range check
+      if (angle >= start && angle <= end) {
+        escape = true;
+      }
+    }
+    if (escape) {
+      if (this.inArc) {
+        // we only run this check once, since we are marking the TRANSITION between being in and out once
+        console.log("Escape");
+        emitter.emit("escape");
+      }
+      return true;
     }
   }
 

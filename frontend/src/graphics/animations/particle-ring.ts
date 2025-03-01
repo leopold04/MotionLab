@@ -17,8 +17,7 @@ class BounceParticle {
   config: AnimationConfig;
   playing: boolean = false;
   requestID: number | null = null; // Variable to hold the requestAnimationFrame ID
-  seed: number;
-  soundSource: string;
+  collisionSound: string | null = null;
 
   constructor(config: AnimationConfig) {
     if (typeof window === "undefined") {
@@ -86,19 +85,34 @@ class BounceParticle {
     );
 
     this.particles = [this.p1, this.p2];
-    this.seed = config["seed"] as number;
-    this.ring.randomizeParticlePositions(this.particles, this.seed);
+    const seed = config["seed"] as number;
+    this.ring.randomizeParticlePositions(this.particles, seed);
 
-    // clearing event emitter
-    emitter.clear();
-    // initializing the emitter to listen for 'collision'
-    emitter.on("collision", () => this.handleSound());
-    this.soundSource = "";
+    emitter.clear(); // clearing event emitter
+    emitter.on("collision", () => this.handleSound()); // initializing the emitter to listen for 'collision'
+
     this.config = config;
   }
 
-  // updating positions of all things (squares, containers, etc)
+  async load() {
+    let startTime = Date.now();
+    try {
+      // loading images
+      for (let p of this.particles) {
+        await p.setImage();
+      }
+
+      // load sound from backend
+      this.collisionSound = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
+    } catch (error) {
+      console.log("error loading images");
+    }
+    let loadTime = (Date.now() - startTime) / 1000;
+    return loadTime;
+  }
+
   update() {
+    // updating positions of all objects in animation
     for (let p of this.particles) {
       p.move();
     }
@@ -110,30 +124,11 @@ class BounceParticle {
     this.frame++;
   }
 
-  // loading images (TODO: add loading all audio)
-  async load() {
-    let startTime = Date.now();
-    try {
-      // loading images
-      for (let p of this.particles) {
-        await p.setImage();
-      }
-
-      // load sound from backend
-      this.soundSource = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
-    } catch (error) {
-      console.log("error loading images");
-    }
-    let loadTime = (Date.now() - startTime) / 1000;
-    return loadTime;
-  }
-
   // drawing all things
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear the canvas
-    // background
-    this.ctx.fillStyle = this.config["background_color"] as string;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = this.config["background_color"] as string; // set background color
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); // fill background
     for (let p of this.particles) {
       p.draw();
     }
@@ -141,15 +136,11 @@ class BounceParticle {
   }
 
   handleSound() {
-    // path needs to be relative to the file it is being run in
     if (typeof window === "undefined") {
-      this.audioTimeline.push({ audio: this.soundSource, frame: this.frame });
+      this.audioTimeline.push({ audio: this.collisionSound, frame: this.frame });
     } else {
-      // path is relative to the public folder
-      // change this so that we load all sounds in initially, then restart them when its time to play
-      // use audio.currentTime = 0 to reset, then audio.play()
-      const a = new Audio(this.soundSource);
-      a.play();
+      const audio = new Audio(this.collisionSound!);
+      audio.play();
     }
   }
 

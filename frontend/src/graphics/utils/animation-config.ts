@@ -29,6 +29,7 @@ type AnimationConfig = {
   sequence_frame_count?: number;
 
   collision_sound?: string;
+  escape_sound?: string;
   sound?: string;
   midi_song?: string;
 };

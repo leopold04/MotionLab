@@ -1,7 +1,7 @@
 import Vector from "./vector.js";
 import Particle from "./particle.js";
+import SeededRandom from "../utils/random.js";
 class Arc {
-  // hollow circle drawn with arc
   pos: Vector;
   radius: number;
   emptyAngle: number;
@@ -10,37 +10,40 @@ class Arc {
   rotationSpeed: number;
   startAngle: number;
   endAngle: number;
-  // prettier-ignore
-  constructor(radius: number, emptyAngle: number, canvas:any, ctx: any){
+  constructor(radius: number, emptyAngle: number, canvas: any, ctx: any) {
     this.radius = radius;
     this.canvas = canvas;
     this.ctx = ctx;
-    this.emptyAngle = emptyAngle;
+    this.emptyAngle = emptyAngle; // in degrees, not radians
     this.pos = new Vector(this.canvas.width / 2, this.canvas.height / 2);
-    const theta = Math.PI * emptyAngle / 180;
-    this.startAngle = theta / 2;
-    this.endAngle = (-1 * theta) / 2;
+    const theta = (Math.PI * emptyAngle) / 180;
+    this.startAngle = -theta / 2;
+    this.endAngle = theta / 2;
     this.rotationSpeed = 0.01;
-
   }
 
   draw() {
     this.ctx.strokeStyle = "red";
     this.ctx.beginPath();
-    this.ctx.arc(this.pos.x, this.pos.y, this.radius, this.startAngle, this.endAngle);
+    this.ctx.arc(this.pos.x, this.pos.y, this.radius, 2 * Math.PI - this.startAngle, 2 * Math.PI - this.endAngle);
     this.ctx.stroke();
   }
   move() {
-    this.startAngle += this.rotationSpeed;
-    this.endAngle += this.rotationSpeed;
+    this.startAngle = (this.startAngle + this.rotationSpeed) % (2 * Math.PI);
+    this.endAngle = (this.endAngle + this.rotationSpeed) % (2 * Math.PI);
   }
 
-  randomRange(min: number, max: number): number {
-    // Use Math.random() to generate a number between min and max (inclusive of max)
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  rotate(angle: number) {
+    // takes in angle in degrees
+    // changes the inital rotation by a set amount
+    angle = (Math.PI * angle) / 180; // converting from degrees to radians
+    this.startAngle = (this.startAngle + angle) % (2 * Math.PI);
+    this.endAngle = (this.endAngle + angle) % (2 * Math.PI);
   }
 
-  randomizeParticlePositions(elements: Particle[]): void {
+  randomizeParticlePositions(elements: Particle[], seed: number): void {
+    const rng = new SeededRandom(seed);
+
     // Function to check for collisions
     const collisions = function (elements: Particle[]): boolean {
       for (let i = 0; i < elements.length; i++) {
@@ -59,12 +62,11 @@ class Arc {
       // First, randomize each square's position
       for (let p of elements) {
         // random angle between 0 and 2pi, distance 0 to ring radius - particle radius
-        let angle = this.randomRange(0, 2 * Math.PI);
-        let distance = this.randomRange(0, this.radius - p.radius - 1);
+        let angle = rng.randomRange(0, 2 * Math.PI);
+        let distance = rng.randomRange(0, this.radius - p.radius - 1);
         p.pos.x = this.pos.x + Math.cos(angle) * distance;
         p.pos.y = this.pos.y + Math.sin(angle) * distance;
       }
-
       // Check for collisions
       allValid = !collisions(elements);
     }
