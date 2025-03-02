@@ -121,9 +121,9 @@ def send_asset(file_path):
     return response
 
 
-@file_bp.route("/file/default_configs", methods=["GET"])
+@file_bp.route("/file/animation_configs", methods=["GET"])
 def read_defaults():
-    response = send_from_directory("./", "default-configs.json")
+    response = send_from_directory("./", "animation-configs.json")
     return response
 
 

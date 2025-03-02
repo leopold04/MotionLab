@@ -1,7 +1,7 @@
-import emitter from "../utils/emitter.js";
-import AnimationConfig from "../utils/animation-config.js";
-import Particle from "../elements/particle.js";
-import Ring from "../elements/ring.js";
+import emitter from "../../utils/emitter.js";
+import AnimationConfig from "../../utils/animation-config.js";
+import Particle from "../../elements/particle.js";
+import Ring from "../../elements/ring.js";
 import { createCanvas, Canvas, CanvasRenderingContext2D, loadImage } from "canvas";
 
 class BounceParticle {

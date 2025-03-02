@@ -11,19 +11,21 @@ let frameDir = "";
 let userID = "";
 let sessionID = 0;
 let sessionDir = "";
-let animationName = "";
+let animationPath = "";
 let audioTimeline = {};
 let frameWriteTime = 0;
 let assetLoadTime = 0;
+let templateName = "";
+let categoryName = "";
 let config: AnimationConfig;
 const fps = 60; // Frames per second for both the generated frames and the final video
 let progress = 0;
 
-async function run(animationName: string) {
+async function run(animationPath: string) {
   try {
     // Dynamically import the correct animation file
     // import relative to current file
-    const module = await import(`../../frontend/src/graphics/animations/${animationName}.js`);
+    const module = await import(`../../frontend/src/graphics/animations/${animationPath}.js`);
     const Animation = module.default;
     const animation = new Animation(config);
     // waiting for all assets to load in
@@ -75,7 +77,9 @@ app.get("/video/frame_progress", (req, res) => {
 app.get("/video/get_info", (req, res) => {
   let info: any = {
     user: userID,
-    template: animationName,
+    path: animationPath,
+    categoryName: categoryName,
+    templateName: templateName,
     resolution: `${config["canvas_width"]}p`,
     session: sessionID,
     sessionDir: sessionDir,
@@ -84,22 +88,19 @@ app.get("/video/get_info", (req, res) => {
     assetLoadTime: assetLoadTime,
     frameWriteTime: frameWriteTime,
   };
-  console.log(info);
   res.json(info);
 });
 
 app.post("/video/create_frames", async (request, response) => {
-  console.log("Request:");
   console.log(request.body);
-  console.log("");
   ({ userID, sessionID } = request.body.userInfo);
   sessionDir = `../videos/${userID}/${sessionID.toString()}`;
   frameDir = path.join(sessionDir, "frames");
   ({ duration } = request.body.videoInfo);
-  ({ animationName, config } = request.body.animationInfo);
+  ({ animationPath, config, categoryName, templateName } = request.body.animationInfo);
   response.json({ message: "Starting frame creation" });
   // allow the run function to run asynchronously
-  run(animationName);
+  run(animationPath);
 });
 
 app.listen(3000, () => {

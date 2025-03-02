@@ -1,7 +1,7 @@
-import emitter from "../utils/emitter.js";
-import AnimationConfig from "../utils/animation-config.js";
-import Particle from "../elements/particle.js";
-import Ring from "../elements/ring.js";
+import emitter from "../../utils/emitter.js";
+import AnimationConfig from "../../utils/animation-config.js";
+import Particle from "../../elements/particle.js";
+import Ring from "../../elements/ring.js";
 import { createCanvas, Canvas, CanvasRenderingContext2D } from "canvas";
 
 class BounceParticle {
@@ -17,9 +17,13 @@ class BounceParticle {
   config: AnimationConfig;
   playing: boolean = false;
   requestID: number | null = null; // Variable to hold the requestAnimationFrame ID
-  collisionSound: string | null = null;
-
+  seed: number;
+  notePaths: string[] = [];
+  noteAudios: HTMLAudioElement[] = [];
+  noteCount: number = 0;
+  noteIdx: number = 0; // the number of the note we are currently on
   constructor(config: AnimationConfig) {
+    // generating headless with node js
     if (typeof window === "undefined") {
       this.canvas = createCanvas(config["canvas_width"], config["canvas_height"]);
       this.ctx = this.canvas.getContext("2d")!;
@@ -51,14 +55,11 @@ class BounceParticle {
     const ringRadius = 0.8 * 360 * scaleFactor;
     const p1Radius = 40 * scaleFactor;
     const p2Radius = 40 * scaleFactor;
-    const [p1vx, p1vy] = [2, 4].map((x) => scaleFactor * x);
-    const [p2vx, p2vy] = [4, 2].map((x) => scaleFactor * x);
+    const [p1vx, p1vy] = [2, 6].map((x) => scaleFactor * x);
+    const [p2vx, p2vy] = [6, 2].map((x) => scaleFactor * x);
 
-    const gravity = 0.01 * scaleFactor;
-
+    const gravity = 0.1 * scaleFactor;
     this.ring = new Ring(ringRadius, this.canvas, this.ctx);
-    // prettier-ignore
-
     this.p1 = new Particle(
       centerX,
       centerY,
@@ -69,7 +70,7 @@ class BounceParticle {
       this.ring,
       config["particle_1_appearance"]!,
       this.canvas,
-      this.ctx,
+      this.ctx
     );
     this.p2 = new Particle(
       centerX,
@@ -85,34 +86,43 @@ class BounceParticle {
     );
 
     this.particles = [this.p1, this.p2];
-    const seed = config["seed"] as number;
-    this.ring.randomizeParticlePositions(this.particles, seed);
+    this.seed = config["seed"] as number;
+    this.ring.randomizeParticlePositions(this.particles, this.seed);
 
-    emitter.clear(); // clearing event emitter
-    emitter.on("collision", () => this.handleSound()); // initializing the emitter to listen for 'collision'
-
+    // clearing event emitter
+    emitter.clear();
+    // initializing the emitter to listen for 'collision'
+    emitter.on("collision", () => this.handleSound());
     this.config = config;
   }
 
   async load() {
     let startTime = Date.now();
-    try {
-      // loading images
-      for (let p of this.particles) {
-        await p.setImage();
+    // load in all of the sound files
+    let response = await fetch("http://localhost:8000/file/get_note_count/" + this.config["midi_song"]);
+    let data = await response.json();
+    this.noteCount = data["note_count"];
+    for (let i = 0; i < this.noteCount; i++) {
+      let notePath = this.config["midi_song"] + `/note${i.toString().padStart(4, "0")}.mp3`;
+      notePath = "http://localhost:8000/file/get_asset/" + notePath;
+      this.notePaths.push(notePath);
+      if (typeof window === "object") {
+        // loading in the audio if we're on the browser
+        this.noteAudios.push(new Audio(notePath));
       }
-
-      // load sound from backend
-      this.collisionSound = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
-    } catch (error) {
-      console.log("error loading images");
     }
+
+    // loading images if necessary
+    for (let p of this.particles) {
+      await p.setImage();
+    }
+
     let loadTime = (Date.now() - startTime) / 1000;
     return loadTime;
   }
 
+  // updating positions of all things (squares, containers, etc)
   update() {
-    // updating positions of all objects in animation
     for (let p of this.particles) {
       p.move();
     }
@@ -127,8 +137,9 @@ class BounceParticle {
   // drawing all things
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear the canvas
-    this.ctx.fillStyle = this.config["background_color"] as string; // set background color
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); // fill background
+    // background
+    this.ctx.fillStyle = this.config["background_color"] as string;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     for (let p of this.particles) {
       p.draw();
     }
@@ -137,11 +148,11 @@ class BounceParticle {
 
   handleSound() {
     if (typeof window === "undefined") {
-      this.audioTimeline.push({ audio: this.collisionSound, frame: this.frame });
+      this.audioTimeline.push({ audio: this.notePaths[this.noteIdx], frame: this.frame });
     } else {
-      const audio = new Audio(this.collisionSound!);
-      audio.play();
+      this.noteAudios[this.noteIdx].play();
     }
+    this.noteIdx = (this.noteIdx + 1) % this.noteCount;
   }
 
   // The animation function to animate

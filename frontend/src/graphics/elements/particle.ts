@@ -5,8 +5,6 @@ import Ring from "./ring.js";
 import Arc from "./arc.js";
 import { loadImage } from "canvas";
 class Particle {
-  // filled circles, elastic collision with fixed mass
-
   // (x,y) is the CENTER of the particle (this is different for square class)
   pos: Vector;
   vel: Vector;

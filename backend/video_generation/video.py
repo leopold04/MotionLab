@@ -228,7 +228,8 @@ def render_video(data):
         # video indentification information
         "url": video_url,
         "user": data["user"],
-        "template": data["template"],
+        "category": data["categoryName"],
+        "template": data["templateName"],
         "resolution": data["resolution"],
         "duration": data["duration"],
         "created_at": creation_time,

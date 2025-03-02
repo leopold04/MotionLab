@@ -2,20 +2,31 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 // gets all the animation names and renders them to the screen
 function Dashboard() {
-  const [animations, setAnimations] = useState<string[]>([]);
+  const [elements, setElements] = useState<any>(null);
 
   async function getAnimationNames() {
-    const response = await fetch("http://localhost:8000/file/default_configs");
+    const response = await fetch("http://localhost:8000/file/animation_configs");
     const data = await response.json();
 
-    let names = [];
-    // want to get categories later on
-    for (let file_name of Object.keys(data)) {
-      // names.push(data[file_name]["name"]);
-      names.push(file_name);
-    }
+    let categories = Object.keys(data);
+    // we use the custom separator -- because we cant pass in / into links
+    // this gets handled in the video editor component
+    let e = categories.map((category: string) => {
+      return (
+        <div key={category}>
+          <h2>{data[category]["category-name"]}</h2>
 
-    setAnimations(names);
+          {Object.keys(data[category]["animations"]).map((animation: string) => (
+            <div key={data[category]["animations"][animation]["animation-name"]}>
+              <Link to={`/animations/${category}--${animation}`}>
+                <button>{data[category]["animations"][animation]["animation-name"]}</button>
+              </Link>
+            </div>
+          ))}
+        </div>
+      );
+    });
+    setElements(e);
   }
 
   useEffect(() => {
@@ -23,11 +34,7 @@ function Dashboard() {
   }, []); // Empty dependency array means it runs only once on mount
 
   // return link to dashboard with animation = name
-  return animations.map((name: string) => (
-    <Link key={name} to={`/animations/${name}`}>
-      <button>{name}</button>
-    </Link>
-  ));
+  return elements;
 }
 
 export default Dashboard;

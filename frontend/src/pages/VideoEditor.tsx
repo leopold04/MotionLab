@@ -11,8 +11,13 @@ function VideoEditor() {
   // getting the url params
   const params = useParams<{ animationName: string }>();
 
-  // current animation that was passed in through params
-  let animation = params["animationName"]!;
+  let path = params["animationName"]!.replace("--", "/");
+  // category and template correspond to directory and filename
+  let [category, template] = path.split("/");
+
+  // categoryName and templateName correspond to the name the user sees
+  const [categoryName, setCategoryName] = useState("");
+  const [templateName, setTemplateName] = useState("");
 
   // location for checking route change for component unmount
   const location = useLocation();
@@ -29,10 +34,8 @@ function VideoEditor() {
   const [isRunning, setIsRunning] = useState(false);
   const intervalID = useRef<any>(null);
   const [time, setTime] = useState(0);
-  // duration of the video
   const [duration, setDuration] = useState<number>(0);
-  // video session ID
-  const [sessionID, setSessionID] = useState<any>("");
+  const [sessionID, setSessionID] = useState<any>(""); // video session ID
 
   const videoResolutions: { [key: string]: number[] } = {
     "480p": [480, 854],
@@ -74,7 +77,6 @@ function VideoEditor() {
       if (document.visibilityState === "visible" && !sessionID) {
         const newSession = generateHash();
         setSessionID(newSession);
-        console.log("Page is visible, session created:", newSession);
       }
     };
 
@@ -154,9 +156,9 @@ function VideoEditor() {
    * displayed in the editor.
    */
   useEffect(() => {
-    switchAnimation(animation);
-    console.log("Animation: " + animation);
-  }, [animation]);
+    switchAnimation(path);
+    console.log("Animation path: " + path);
+  }, [path]);
 
   // we can use a state for the time here because even if the page re renders (since the state of is running changes)
   // the animation will not be re rendered, since it is a reference.
@@ -192,19 +194,16 @@ function VideoEditor() {
    *
    * @param {string} animation - The name of the animation to get configs for.
    */
-  async function getDefaultConfigs(animation: string) {
-    const response = await fetch("http://localhost:8000/file/default_configs");
+  async function getAnimationConfigs(animation: string) {
+    const response = await fetch("http://localhost:8000/file/animation_configs");
     const data = await response.json();
-    configRef.current = data[animation];
+    let settings = data[category]["animations"][animation];
+    configRef.current = settings;
+    setCategoryName(data[category]["category-name"]);
+    setTemplateName(settings["animation-name"]);
     let elementList = await createElementList(configRef.current);
     setFormElements(elementList);
-    let nameMap: { [key: string]: string } = {};
-
-    // want to get categories later on
-    for (let file_name of Object.keys(data)) {
-      nameMap[file_name] = data[file_name]["name"];
-    }
-    setDuration(data[animation]["duration"]);
+    setDuration(settings["duration"]);
   }
 
   /**
@@ -248,7 +247,7 @@ function VideoEditor() {
       animationRef.current.pause();
     }
     try {
-      await getDefaultConfigs(animationName);
+      await getAnimationConfigs(template);
       const module = await import(/* @vite-ignore */ animationPath);
       AnimationClassRef.current = module.default;
       animationRef.current = new AnimationClassRef.current(configRef.current);
@@ -268,7 +267,7 @@ function VideoEditor() {
    * reinitializes it with the current configuration settings.
    */
   async function resetAnimation() {
-    let animationPath = `../graphics/animations/${animation}`;
+    let animationPath = `../graphics/animations/${path}`;
     if (animationRef.current != null) {
       animationRef.current.pause();
     }
@@ -311,11 +310,17 @@ function VideoEditor() {
     let videoData = {
       userInfo: { userID: userID, sessionID: sessionID },
       videoInfo: { duration: duration },
-      animationInfo: { animationName: animation, config: configRef.current },
+      animationInfo: {
+        animationPath: path,
+        config: configRef.current,
+        categoryName: categoryName,
+        templateName: templateName,
+      },
     };
     try {
       // send request to express backend to make the frames
       console.log("Sending frame creation request");
+      console.log(videoData);
       await fetch("http://localhost:3000/video/create_frames", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

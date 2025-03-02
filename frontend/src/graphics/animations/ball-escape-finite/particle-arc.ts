@@ -1,25 +1,24 @@
-import AnimationConfig from "../utils/animation-config.js";
-import Square from "../elements/square.js";
-import Box from "../elements/box.js";
-import emitter from "../utils/emitter.js";
+import emitter from "../../utils/emitter.js";
+import AnimationConfig from "../../utils/animation-config.js";
+import Particle from "../../elements/particle.js";
+import Arc from "../../elements/arc.js";
 import { createCanvas, Canvas, CanvasRenderingContext2D } from "canvas";
 
-class BounceSquare {
+class SpinRing {
   canvas: HTMLCanvasElement | Canvas;
   ctx: CanvasRenderingContext2D | any;
-  s1: Square;
-  s2: Square;
-  box: Box;
-  squares: Square[];
+  arc: Arc;
+  p1: Particle;
+  particles: Particle[];
   frame: number = 0;
   fps: number = 60;
   audioTimeline: object[] = [];
   config: AnimationConfig;
   playing: boolean = false;
-  seed: number;
   requestID: number | null = null; // Variable to hold the requestAnimationFrame ID
+  collisionSound: string | null = null;
+  escapeSound: string | null = null;
 
-  collisionSource: string = "";
   constructor(config: AnimationConfig) {
     if (typeof window === "undefined") {
       this.canvas = createCanvas(config["canvas_width"], config["canvas_height"]);
@@ -30,7 +29,6 @@ class BounceSquare {
       this.canvas.width = config["canvas_width"];
       this.canvas.height = config["canvas_height"];
     }
-
     let scaleFactor;
     switch (config["canvas_width"]) {
       case 480:
@@ -48,51 +46,43 @@ class BounceSquare {
     }
     const centerX = this.canvas.width / 2;
     const centerY = this.canvas.height / 2;
+    const arcRadius = 0.8 * (config["canvas_width"] / 2);
+    this.arc = new Arc(arcRadius, 45, this.canvas, this.ctx);
+    const gravity = 0.05 * scaleFactor;
 
-    this.box = new Box(this.canvas, this.ctx);
-    const box_size = this.box.size;
-
-    this.s1 = new Square(
-      centerX + 50 * scaleFactor,
-      centerY + 50 * scaleFactor,
-      box_size * 0.2 * scaleFactor,
-      6 * scaleFactor,
-      4 * scaleFactor,
-      config["square_1_appearance"]!,
-      this.box,
+    this.p1 = new Particle(
+      centerX,
+      centerY,
+      40 * scaleFactor,
+      5 * scaleFactor,
+      5 * scaleFactor,
+      gravity,
+      this.arc,
+      config["particle_1_appearance"]!,
       this.canvas,
       this.ctx
     );
-    this.s2 = new Square(
-      centerX - 50 * scaleFactor,
-      centerY - 50 * scaleFactor,
-      box_size * 0.2 * scaleFactor,
-      -8 * scaleFactor,
-      7 * scaleFactor,
-      config["square_2_appearance"]!,
-      this.box,
-      this.canvas,
-      this.ctx
-    );
-    this.squares = [this.s1, this.s2];
-    this.seed = config["seed"] as number;
-    this.box.randomizeSquarePositions(this.squares, this.seed);
+
+    this.particles = [this.p1];
+    const seed = config["seed"] as number;
+    this.arc.randomizeParticlePositions(this.particles, seed);
+
+    emitter.clear(); // clearing event emitter
+    emitter.on("collision", () => this.handleArcCollision()); // initalizing emitter to listen for 'collision'
+    emitter.on("escape", () => this.handleArcEscape()); // listening for escape
     this.config = config;
-
-    emitter.clear();
-    emitter.on("collision", () => this.handleSound());
   }
 
   async load() {
     let startTime = Date.now();
     try {
-      // loading images
-      for (let s of this.squares) {
-        await s.setImage();
+      for (let p of this.particles) {
+        // setting images if they need to be set
+        await p.setImage();
       }
-
       // load sound from backend
-      this.collisionSource = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
+      this.collisionSound = "http://localhost:8000/file/get_asset/" + this.config["collision_sound"];
+      this.escapeSound = "http://localhost:8000/file/get_asset/" + this.config["escape_sound"];
     } catch (error) {
       console.log("error loading images");
     }
@@ -102,35 +92,44 @@ class BounceSquare {
 
   // updating positions of all things (squares, containers, etc)
   update() {
-    for (let s of this.squares) {
-      s.move();
+    for (let p of this.particles) {
+      p.move();
     }
-    // handling collision
-    for (let i = 0; i < this.squares.length; i++) {
-      for (let j = i + 1; j < this.squares.length; j++) {
-        Square.handleSquareCollision(this.squares[i], this.squares[j]);
+    this.arc.move();
+    // detect and resolve collisions
+    for (let i = 0; i < this.particles.length; i++) {
+      for (let j = i + 1; j < this.particles.length; j++) {
+        Particle.handleCollision(this.particles[i], this.particles[j]);
       }
     }
     this.frame++;
   }
 
   draw() {
-    // drawing objects on screen
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear the canvas
     this.ctx.fillStyle = this.config["background_color"] as string; // set background color
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); // draw background
 
-    for (let s of this.squares) {
-      s.draw();
+    for (let p of this.particles) {
+      p.draw();
     }
-    this.box.draw();
+    this.arc.draw();
   }
 
-  handleSound() {
+  handleArcCollision() {
     if (typeof window === "undefined") {
-      this.audioTimeline.push({ audio: this.collisionSource, frame: this.frame });
+      this.audioTimeline.push({ audio: this.collisionSound, frame: this.frame });
     } else {
-      const audio = new Audio(this.collisionSource);
+      const audio = new Audio(this.collisionSound!);
+      audio.play();
+    }
+  }
+
+  handleArcEscape() {
+    if (typeof window === "undefined") {
+      this.audioTimeline.push({ audio: this.escapeSound, frame: this.frame });
+    } else {
+      const audio = new Audio(this.escapeSound!);
       audio.play();
     }
   }
@@ -177,4 +176,4 @@ class BounceSquare {
     }
   }
 }
-export default BounceSquare;
+export default SpinRing;
