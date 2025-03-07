@@ -48,7 +48,7 @@ class SpinRing {
     const centerY = this.canvas.height / 2;
     const arcRadius = 0.8 * (config["canvas_width"] / 2);
     this.arc = new Arc(arcRadius, 45, this.canvas, this.ctx);
-    const gravity = 0.05 * scaleFactor;
+    const gravity = 0.25 * scaleFactor;
 
     this.p1 = new Particle(
       centerX,

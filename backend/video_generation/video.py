@@ -1,12 +1,11 @@
 import os
 from flask import Blueprint, request, jsonify
 import requests
-from user.user import create_bucket
 import ffmpeg
 from pydub import AudioSegment
 import time
 from tusclient import client
-from user.user import supabase
+from user.auth import supabase
 import pytz
 import datetime
 import shutil
@@ -140,14 +139,13 @@ def upload_video(file, user, session):
             supabase.supabase_key}", "x-upsert": "true"},
     )
 
-    # create a bucket for the user if you have not already
-    create_bucket(user)
-    bucket_path = "videos/video_" + session
+    # each user gets their own separate folder for videos
+    bucket_path = f"{user}/video_" + session
     uploader = tus_client.uploader(
         file_stream=file,
         chunk_size=(6 * 1024 * 1024),
         metadata={
-            "bucketName": user,
+            "bucketName": "videos",
             "objectName": bucket_path,
             "contentType": "video/mp4",
             "cacheControl": "3600",
@@ -155,8 +153,8 @@ def upload_video(file, user, session):
     )
     uploader.upload()
     # retrieving public url for the video we just uploaded
-    video_url = supabase.storage.from_(user).get_public_url(bucket_path)
-    print(f"Uploaded video to supabase at {user}/{bucket_path}")
+    video_url = supabase.storage.from_("videos").get_public_url(bucket_path)
+    print(f"Uploaded video to supabase at videos/{bucket_path}")
     upload_time = time.time() - start_time
     return video_url, upload_time
 

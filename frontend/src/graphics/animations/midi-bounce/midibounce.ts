@@ -105,10 +105,10 @@ class BounceParticle {
     for (let i = 0; i < this.noteCount; i++) {
       let notePath = this.config["midi_song"] + `/note${i.toString().padStart(4, "0")}.mp3`;
       notePath = "http://localhost:8000/file/get_asset/" + notePath;
-      this.notePaths.push(notePath);
+      await this.notePaths.push(notePath);
       if (typeof window === "object") {
         // loading in the audio if we're on the browser
-        this.noteAudios.push(new Audio(notePath));
+        await this.noteAudios.push(new Audio(notePath));
       }
     }
 

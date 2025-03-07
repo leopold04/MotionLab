@@ -142,7 +142,7 @@ class BounceParticle {
       let frameURL = "http://localhost:8000/file/get_asset/" + framePath;
       // adding a promise to the queue and adding an image to the image array at index i - 1 (since i starts at 1)
       let imagePromise = this.loadImageAsync(frameURL, i - 1);
-      imagePromises.push(imagePromise);
+      await imagePromises.push(imagePromise);
     }
 
     // wait for all images to be loaded concurrently
@@ -205,7 +205,7 @@ class BounceParticle {
       let imgY = this.centerY - imgH / 2;
       this.ctx.drawImage(currentImage, imgX, imgY, imgW, imgH);
     } catch (error) {
-      console.log(error, this.imgIdx);
+      console.log(error, index);
     }
   }
 
