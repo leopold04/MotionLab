@@ -3,8 +3,9 @@ import emitter from "../../utils/emitter.js";
 import Square from "../../elements/square.js";
 import Box from "../../elements/box.js";
 import { createCanvas, Canvas, CanvasRenderingContext2D } from "canvas";
-
-class BounceSquare {
+import SeededRandom from "../../utils/random.js";
+class Animation {
+  hash: string = SeededRandom.generateHash();
   canvas: HTMLCanvasElement | Canvas;
   ctx: CanvasRenderingContext2D | any;
   s1: Square;
@@ -61,7 +62,8 @@ class BounceSquare {
       config["square_1_appearance"]!,
       this.box,
       this.canvas,
-      this.ctx
+      this.ctx,
+      this.hash
     );
     this.s2 = new Square(
       centerX - 50 * scaleFactor,
@@ -72,15 +74,15 @@ class BounceSquare {
       config["square_2_appearance"]!,
       this.box,
       this.canvas,
-      this.ctx
+      this.ctx,
+      this.hash
     );
     this.squares = [this.s1, this.s2];
     this.seed = config["seed"] as number;
     this.box.randomizeSquarePositions(this.squares, this.seed);
     this.config = config;
 
-    emitter.clear();
-    emitter.on("collision", () => this.handleSound());
+    emitter.on("collision", this.hash, () => this.handleSound());
   }
 
   async load() {
@@ -177,4 +179,4 @@ class BounceSquare {
     }
   }
 }
-export default BounceSquare;
+export default Animation;

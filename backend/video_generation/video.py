@@ -11,9 +11,8 @@ import datetime
 import shutil
 import threading
 
-# we start at 75 / 100 because the frames have already been made
-progress = 75
-video_info = {}  # will change once the video is done generating
+# containing the progress of each user's session's video and info related to it
+hashmap = {}
 
 # video blueprint
 video_bp = Blueprint("video_bp", __name__)
@@ -33,6 +32,9 @@ def download_audio_file(url: str, path: str):
 
 
 def generate_audio(audio_timeline: list[dict], duration: int, session_dir: str):
+    '''
+    Makes an audio file given the audio timeline
+    '''
     start_time = time.time()
     # audio_timeline = [{"audio": url, "frame": int}, {"audio": url, "frame": int}]
     # Create an empty audio segment to start with (duration is in ms)
@@ -69,6 +71,9 @@ def generate_audio(audio_timeline: list[dict], duration: int, session_dir: str):
 
 # Function to generate a video from the PNG frames
 def combine_frames(session_dir: str):
+    '''
+    Concatenates all the frames in a video session's frame directory to make a video
+    '''
     start_time = time.time()
     # where the frames are located
     frame_dir = os.path.join(session_dir, "frames")
@@ -82,7 +87,6 @@ def combine_frames(session_dir: str):
             .run()  # Execute the FFmpeg command
 
         print(f"Frame sequence generated and saved to {output_video}")
-
     except ffmpeg.Error as e:
         print(f"Error during video creation: {e}")
     time_elapsed = time.time() - start_time
@@ -159,22 +163,27 @@ def upload_video(file, user, session):
     return video_url, upload_time
 
 
-@video_bp.route("/video/render_progress", methods=["GET"])
+@video_bp.route("/video/render_progress", methods=["POST"])
 def get_progress():
     '''
-    Returns the progress of the video 
+    Returns the progress of the video for a given user and session
     '''
-    global progress
-    return jsonify({"progress": progress})
+    global hashmap
+    data = request.get_json()
+    return jsonify({"progress": hashmap[data["userID"]][data["sessionID"]]["progress"]})
 
 
-@video_bp.route("/video/get_info", methods=["GET"])
+@video_bp.route("/video/get_info", methods=["POST"])
 def get_info():
     '''
     Returns the finished video information 
     '''
-    global video_info
-    return jsonify(video_info), 200
+    global hashmap
+    data = request.get_json()
+    info = hashmap[data["userID"]][data["sessionID"]]["info"]
+    # removing the data from our map since we're done with it
+    del hashmap[data["userID"]][data["sessionID"]]
+    return jsonify(info), 200
 
 
 def render_video(data):
@@ -186,25 +195,33 @@ def render_video(data):
     90 - 95 gen vid
     95 - 100 upload
     '''
-    global progress
-    global video_info
+    global hashmap
+    userID = data["userID"]
+    sessionID = data["sessionID"]
+
+    if userID not in hashmap:
+        # initializing the user's progress map
+        hashmap[userID] = {}
+    hashmap[userID][sessionID] = {}
+    hashmap[userID][sessionID
+                    ]["progress"] = 75  # we start at 75
 
     # generating audio (saved to sessionDir/output.mp3)
     audio_creation_time = generate_audio(
         data["audioTimeline"], data["duration"], data["sessionDir"])
     time.sleep(0.5)
-    progress = 85
+    hashmap[userID][sessionID]["progress"] = 85
 
     # generating muted video (saved to sessionDir/output.mp4)
     frame_combination_time = combine_frames(data["sessionDir"])
     time.sleep(0.5)
 
-    progress = 90
+    hashmap[userID][sessionID]["progress"] = 90
 
     # combining the muted video and audio (saved to sessionDir/final.mp4)
     video_path, audio_integration_time = generate_video(data["sessionDir"])
     time.sleep(0.5)
-    progress = 95
+    hashmap[userID][sessionID]["progress"] = 95
 
     # cleaning up resources (deleting audio and frame directories, as well as intermediate output files)
     clean_up(data["sessionDir"])
@@ -212,7 +229,7 @@ def render_video(data):
     # upload the file to supabase using TUS protocol
     with open(video_path, "rb") as file:
         video_url, upload_time = upload_video(
-            file, str(data["user"]), str(data["session"]))
+            file, str(userID), str(sessionID))
     total_time = data["assetLoadTime"] + data["frameWriteTime"] + \
         frame_combination_time + audio_creation_time + \
         audio_integration_time + upload_time
@@ -222,10 +239,10 @@ def render_video(data):
     # time formatting
     creation_time = localized_time.strftime("%m-%d-%Y %I:%M%p").lower()
 
-    video_info = {
+    info = {
         # video indentification information
         "url": video_url,
-        "user": data["user"],
+        "user": userID,
         "category": data["categoryName"],
         "template": data["templateName"],
         "resolution": data["resolution"],
@@ -240,13 +257,15 @@ def render_video(data):
         "upload_time": upload_time,
         "total_time": total_time
     }
+    hashmap[userID][sessionID]["info"] = info
     # updating the videos table in our database
-    supabase.table("Videos").insert(video_info).execute()
+    supabase.table("Videos").insert(info).execute()
     # this lets the progress bar "show" 100 because we round the value for display
-    progress = 99.9
+    hashmap[userID][sessionID]["progress"] = 99.9
     # but this gives us a chance for it to display since we poll every 0.5 seconds
     time.sleep(1.5)
-    progress = 100  # letting the frontend know that we are done rendering the video
+    # letting the frontend know that we are done rendering the video
+    hashmap[userID][sessionID]["progress"] = 100
 
 
 @video_bp.route("/video/render_video", methods=["POST"])

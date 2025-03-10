@@ -3,8 +3,9 @@ import AnimationConfig from "../../utils/animation-config.js";
 import Particle from "../../elements/particle.js";
 import Ring from "../../elements/ring.js";
 import { createCanvas, Canvas, CanvasRenderingContext2D, loadImage } from "canvas";
-
-class BounceParticle {
+import SeededRandom from "../../utils/random.js";
+class Animation {
+  hash: string = SeededRandom.generateHash();
   canvas: HTMLCanvasElement | Canvas;
   ctx: CanvasRenderingContext2D | any;
   ring: Ring;
@@ -89,16 +90,15 @@ class BounceParticle {
       this.ring,
       config["particle_1_color"]!,
       this.canvas,
-      this.ctx
+      this.ctx,
+      this.hash
     );
 
     this.particles = [this.p1];
     this.ring.randomizeParticlePositions(this.particles, this.seed);
 
-    // clearing event emitter
-    emitter.clear();
     // initializing the emitter to listen for 'collision'
-    emitter.on("collision", () => this.handleBounce());
+    emitter.on("collision", this.hash, () => this.handleBounce());
     this.config = config;
   }
 
@@ -299,4 +299,4 @@ class BounceParticle {
   }
 }
 
-export default BounceParticle;
+export default Animation;

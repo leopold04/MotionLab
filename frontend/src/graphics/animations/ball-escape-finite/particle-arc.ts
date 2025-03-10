@@ -3,8 +3,11 @@ import AnimationConfig from "../../utils/animation-config.js";
 import Particle from "../../elements/particle.js";
 import Arc from "../../elements/arc.js";
 import { createCanvas, Canvas, CanvasRenderingContext2D } from "canvas";
+import SeededRandom from "../../utils/random.js";
 
-class SpinRing {
+class Animation {
+  hash: string = SeededRandom.generateHash();
+
   canvas: HTMLCanvasElement | Canvas;
   ctx: CanvasRenderingContext2D | any;
   arc: Arc;
@@ -60,16 +63,16 @@ class SpinRing {
       this.arc,
       config["particle_1_appearance"]!,
       this.canvas,
-      this.ctx
+      this.ctx,
+      this.hash
     );
 
     this.particles = [this.p1];
     const seed = config["seed"] as number;
     this.arc.randomizeParticlePositions(this.particles, seed);
 
-    emitter.clear(); // clearing event emitter
-    emitter.on("collision", () => this.handleArcCollision()); // initalizing emitter to listen for 'collision'
-    emitter.on("escape", () => this.handleArcEscape()); // listening for escape
+    emitter.on("collision", this.hash, () => this.handleArcCollision()); // initalizing emitter to listen for 'collision'
+    emitter.on("escape", this.hash, () => this.handleArcEscape()); // listening for escape
     this.config = config;
   }
 
@@ -176,4 +179,4 @@ class SpinRing {
     }
   }
 }
-export default SpinRing;
+export default Animation;

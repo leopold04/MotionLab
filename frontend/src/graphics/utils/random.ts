@@ -47,6 +47,17 @@ class SeededRandom {
     // Scale it to the desired range [min, max], rounding down to get an integer
     return Math.floor(this.next() * (max - min + 1)) + min;
   }
+
+  static generateHash(length: number = 5): string {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let hash = "";
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      hash += characters[randomIndex];
+    }
+    return hash;
+  }
 }
 
 export default SeededRandom;

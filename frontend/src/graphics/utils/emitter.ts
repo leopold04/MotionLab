@@ -6,11 +6,12 @@ class EventEmitter {
    * Adds a callback function to the specified event.
    *
    * @param event The name of the event.
+   * @param hash A unique hash
    * @param callback The function to be called when the event is emitted.
    */
-  on(event: string, callback: Function) {
-    this.events[event] = this.events[event] || [];
-    this.events[event].push(callback);
+  on(event: string, hash: string, callback: Function) {
+    this.events[event + hash] = this.events[event + hash] || [];
+    this.events[event + hash].push(callback);
   }
 
   /**
@@ -19,9 +20,9 @@ class EventEmitter {
    * @param event The name of the event.
    * @param callback The function to be removed.
    */
-  off(event: string, callback: Function) {
-    if (this.events[event]) {
-      this.events[event] = this.events[event].filter((cb) => cb !== callback);
+  off(event: string, hash: string, callback: Function) {
+    if (this.events[event + hash]) {
+      this.events[event + hash] = this.events[event + hash].filter((cb) => cb !== callback);
     }
   }
 
@@ -31,13 +32,13 @@ class EventEmitter {
    * @param event The name of the event.
    * @param args Additional arguments to be passed to the callback functions.
    */
-  emit(event: string, ...args: any[]) {
-    if (this.events[event]) {
-      this.events[event].forEach((callback) => callback(...args));
+  emit(event: string, hash: string, ...args: any[]) {
+    if (this.events[event + hash]) {
+      this.events[event + hash].forEach((callback) => callback(...args));
     }
   }
 
-  // clears the event list (use when initializing animations)
+  // clears the event list
   clear() {
     this.events = {};
   }

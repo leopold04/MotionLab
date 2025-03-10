@@ -17,9 +17,10 @@ class Particle {
   image: HTMLImageElement | any;
   imageSource: any = null;
   inArc: boolean = true;
+  animationHash: string;
   // prettier-ignore
   constructor(x: number, y: number, radius: number, dx: number, dy: number, gravity: number,
-             container: Ring | Box | Arc, appearance: string, canvas: any, ctx: any) {
+             container: Ring | Box | Arc, appearance: string, canvas: any, ctx: any, animationHash: string) {
     this.pos = new Vector(x, y);
     this.radius = radius;
     this.vel = new Vector(dx, dy);
@@ -27,6 +28,7 @@ class Particle {
     this.canvas = canvas;
     this.ctx = ctx;
     this.container = container;
+    this.animationHash = animationHash
     if (appearance.startsWith("#")){
       this.color = appearance;
     } else{
@@ -71,7 +73,8 @@ class Particle {
         this.vel.y -= this.gravity / 2;
         let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
         this.pos = Vector.add(this.container.pos, new_pos);
-        emitter.emit("collision");
+        // setting a specific hash to the message prevents conflicts between animation events
+        emitter.emit("collision", this.animationHash);
       }
     }
     if (this.container instanceof Arc) {
@@ -91,7 +94,7 @@ class Particle {
           this.vel.y -= this.gravity / 2;
           let new_pos = Vector.mul(dist_unit, this.container.radius - this.radius);
           this.pos = Vector.add(this.container.pos, new_pos);
-          emitter.emit("collision");
+          emitter.emit("collision", this.animationHash);
         }
       }
     }
@@ -129,8 +132,7 @@ class Particle {
     if (escape) {
       if (this.inArc) {
         // we only run this check once, since we are marking the TRANSITION between being in and out once
-        console.log("Escape");
-        emitter.emit("escape");
+        emitter.emit("escape", this.animationHash);
       }
       return true;
     }
@@ -174,7 +176,7 @@ class Particle {
   */
   static handleCollision(p1: Particle, p2: Particle) {
     if (Particle.collides(p1, p2)) {
-      emitter.emit("collision");
+      emitter.emit("collision", p1.animationHash);
       // updating particle positions
       let overlap = Particle.distance(p1, p2) - (p1.radius + p2.radius);
       let direction = Vector.sub(p1.pos, p2.pos);

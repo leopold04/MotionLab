@@ -4,6 +4,7 @@ import AnimationConfig from "../graphics/utils/animation-config";
 import VideoEditorContext from "../components/VideoEditorContext";
 import ControlPanel from "../components/ControlPanel";
 import VideoPlayer from "../components/VideoPlayer";
+import SeededRandom from "../graphics/utils/random";
 import { useParams, useLocation } from "react-router-dom";
 
 function VideoEditor() {
@@ -43,17 +44,6 @@ function VideoEditor() {
     "1080p": [1080, 1920],
   };
 
-  function generateHash(length: number = 5): string {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let hash = "";
-
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length);
-      hash += characters[randomIndex];
-    }
-    return hash;
-  }
-
   // once the user reloads or closes the page, we remove the directories associated with their session
   async function clearSession() {
     const userInfo = { userID: userID, sessionID: sessionID };
@@ -75,7 +65,7 @@ function VideoEditor() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && !sessionID) {
-        const newSession = generateHash();
+        const newSession = SeededRandom.generateHash();
         setSessionID(newSession);
       }
     };
@@ -92,16 +82,16 @@ function VideoEditor() {
     };
   }, [sessionID]);
 
-  useEffect(() => {
-    console.log("Entered route:", location.pathname);
+  // useEffect(() => {
+  //   console.log("Entered route:", location.pathname);
 
-    // Cleanup function: runs when the component unmounts or before the route changes
-    return () => {
-      console.log("Left route:", location.pathname);
-      clearSession(); // Call clearSession when leaving the route
-      resetAnimation();
-    };
-  }, [location.pathname]);
+  //   // Cleanup function: runs when the component unmounts or before the route changes
+  //   return () => {
+  //     console.log("Left route:", location.pathname);
+  //     clearSession(); // Call clearSession when leaving the route
+  //     resetAnimation();
+  //   };
+  // }, [location.pathname]);
 
   // react state updates are asynchronous, so calling setSession() might not immediately update it
   // we can use the useEffect hook to re-render the component once we set the session correctly
@@ -307,8 +297,9 @@ function VideoEditor() {
    * The request returns the URL of the video we generated, then uploaded to supabase
    */
   async function exportVideo() {
+    let userInfo = { userID: userID, sessionID: sessionID };
     let videoData = {
-      userInfo: { userID: userID, sessionID: sessionID },
+      userInfo: userInfo,
       videoInfo: { duration: duration },
       animationInfo: {
         animationPath: path,
@@ -330,7 +321,11 @@ function VideoEditor() {
       setVideoProgress({ progress: 0.01, url: null }); // this just triggers the change in appearance for our button
       await pollProgress("create_frames");
 
-      const info_response = await fetch("http://localhost:3000/video/get_info");
+      const info_response = await fetch("http://localhost:3000/video/get_info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userInfo),
+      });
       // info to send to the flask backend to render the video
       const info = await info_response.json();
 
@@ -343,7 +338,11 @@ function VideoEditor() {
       });
       await pollProgress("render_video"); // we wait until the video is done rendering
 
-      let res = await fetch("http://localhost:8000/video/get_info");
+      let res = await fetch("http://localhost:8000/video/get_info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userInfo),
+      });
       // information of the finished video (including upload URL)
       let data = await res.json();
 
@@ -359,12 +358,21 @@ function VideoEditor() {
       const poll = async () => {
         try {
           let response;
+          let userInfo = { userID: userID, sessionID: sessionID };
           switch (endpoint) {
             case "create_frames":
-              response = await fetch("http://localhost:3000/video/frame_progress");
+              response = await fetch("http://localhost:3000/video/frame_progress", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(userInfo),
+              });
               break;
             case "render_video":
-              response = await fetch("http://localhost:8000/video/render_progress");
+              response = await fetch("http://localhost:8000/video/render_progress", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(userInfo),
+              });
               break;
             default:
               // we should never reach this case
