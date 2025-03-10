@@ -113,6 +113,10 @@ class Animation {
     return loadTime;
   }
 
+  async terminate() {
+    emitter.clear("collision", this.hash);
+  }
+
   update() {
     // updating positions of all objects in animation
     for (let p of this.particles) {

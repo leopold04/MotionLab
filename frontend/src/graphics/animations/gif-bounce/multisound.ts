@@ -102,34 +102,6 @@ class Animation {
     this.config = config;
   }
 
-  // updating positions of all things (squares, containers, etc)
-  update() {
-    for (let p of this.particles) {
-      p.move();
-    }
-    for (let i = 0; i < this.particles.length; i++) {
-      for (let j = i + 1; j < this.particles.length; j++) {
-        Particle.handleCollision(this.particles[i], this.particles[j]);
-      }
-    }
-    if (this.frame - this.last >= this.soundBuffer) {
-      this.didx = 0;
-      if (typeof window === "object" && this.last != 0) {
-        this.sound.pause();
-        this.sound.currentTime = 0;
-      }
-    }
-    if (typeof window === "undefined") {
-      // make the timeline once we reach the end of the animation
-      if (this.frame == this.duration - 1) {
-        this.createAudioTimeline();
-      }
-    }
-    this.frame++;
-  }
-
-  // loading images (TODO: add loading all audio)
-  // TODO: create failsafe if assets are not loaded in yet
   async load() {
     console.log(this.config);
     let startTime = Date.now();
@@ -170,6 +142,32 @@ class Animation {
     } catch (error) {
       console.error(`Error loading image at ${imgURL}:`, error);
     }
+  }
+
+  // runs at the end of the animation
+  async terminate() {
+    await this.createAudioTimeline();
+    emitter.clear("collision", this.hash); // removing our added events from memory at the end of the animation
+  }
+
+  // updating positions of all things (squares, containers, etc)
+  update() {
+    for (let p of this.particles) {
+      p.move();
+    }
+    for (let i = 0; i < this.particles.length; i++) {
+      for (let j = i + 1; j < this.particles.length; j++) {
+        Particle.handleCollision(this.particles[i], this.particles[j]);
+      }
+    }
+    if (this.frame - this.last >= this.soundBuffer) {
+      this.didx = 0;
+      if (typeof window === "object" && this.last != 0) {
+        this.sound.pause();
+        this.sound.currentTime = 0;
+      }
+    }
+    this.frame++;
   }
 
   // drawing all things
@@ -231,7 +229,7 @@ class Animation {
     }
   }
 
-  createAudioTimeline() {
+  async createAudioTimeline() {
     let start = this.bounceTimes[0];
     for (let i = 1; i < this.bounceTimes.length; i++) {
       if (this.bounceTimes[i] - this.bounceTimes[i - 1] >= this.soundBuffer) {

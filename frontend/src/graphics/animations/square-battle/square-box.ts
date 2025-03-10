@@ -102,6 +102,10 @@ class Animation {
     return loadTime;
   }
 
+  async terminate() {
+    emitter.clear("collision", this.hash);
+  }
+
   // updating positions of all things (squares, containers, etc)
   update() {
     for (let s of this.squares) {

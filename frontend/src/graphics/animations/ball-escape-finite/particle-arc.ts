@@ -93,6 +93,12 @@ class Animation {
     return loadTime;
   }
 
+  // runs at the end of the animation
+  async terminate() {
+    emitter.clear("collision", this.hash);
+    emitter.clear("escape", this.hash);
+  }
+
   // updating positions of all things (squares, containers, etc)
   update() {
     for (let p of this.particles) {

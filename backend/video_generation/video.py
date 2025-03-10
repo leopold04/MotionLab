@@ -124,6 +124,7 @@ def generate_video(session_dir: str):
     video = ffmpeg.input(output_video)
     ffmpeg.output(video, audio, final_video, vcodec='libx264',
                   acodec='aac', strict='experimental', loglevel='quiet').run()
+    # if the audio sounds weird when you upload the video, change the audio codec
     print("Final video generated and saved to", final_video)
     video_integration_time = time.time() - start_time
     return final_video, video_integration_time
@@ -183,6 +184,8 @@ def get_info():
     info = hashmap[data["userID"]][data["sessionID"]]["info"]
     # removing the data from our map since we're done with it
     del hashmap[data["userID"]][data["sessionID"]]
+    if len(hashmap[data["userID"]].keys()) == 0:
+        del hashmap[data["userID"]]
     return jsonify(info), 200
 
 

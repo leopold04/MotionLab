@@ -1,33 +1,14 @@
-// importing static modules
 import fs from "fs";
 import path from "path";
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch";
-import AnimationConfig from "../../frontend/src/graphics/utils/animation-config.js";
 
-let config: AnimationConfig;
-const fps = 60; // Frames per second for both the generated frames and the final video
-/*
-let duration: number;
-let frameDir = "";
-let userID = "";
-let sessionID = 0;
-let sessionDir = "";
-let animationPath = "";
-let audioTimeline = {};
-let frameWriteTime = 0;
-let assetLoadTime = 0;
-let templateName = "";
-let categoryName = "";
-
-*/
+const fps = 60;
 let map: any = {};
 
 async function run(animationPath: string, user: string, session: number) {
   try {
     // Dynamically import the correct animation file
-    // import relative to current file
     const module = await import(`../../frontend/src/graphics/animations/${animationPath}.js`);
     const Animation = module.default;
     const config = map[user][session]["config"];
@@ -38,6 +19,7 @@ async function run(animationPath: string, user: string, session: number) {
     // waiting for all frames to be written
     console.log("Creating and writing frames...");
     let frameWriteTime = await writeFrames(animation, user, session);
+    await animation.terminate(); // clearing events added to our emitter
 
     map[user][session]["info"] = {
       userID: user,
@@ -52,7 +34,6 @@ async function run(animationPath: string, user: string, session: number) {
       assetLoadTime: assetLoadTime,
       frameWriteTime: frameWriteTime,
     };
-    console.log(animation.audioTimeline);
   } catch (error) {
     console.error("Error loading animation:", error);
   }
@@ -103,6 +84,9 @@ app.post("/video/get_info", (req, res) => {
   res.json(map[user][session]["info"]);
   // remove the appropriate maps from memory after we're done making frames
   delete map[user][session];
+  if (Object.keys(map[user]).length == 0) {
+    delete map[user];
+  }
 });
 
 app.post("/video/create_frames", async (request, response) => {

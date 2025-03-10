@@ -39,8 +39,8 @@ class EventEmitter {
   }
 
   // clears the event list
-  clear() {
-    this.events = {};
+  clear(event: string, hash: string) {
+    delete this.events[event + hash];
   }
 }
 
